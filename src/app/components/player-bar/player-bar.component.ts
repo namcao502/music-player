@@ -27,6 +27,10 @@ export class PlayerBarComponent implements OnDestroy {
   isSeeking = signal(false);
   /** Cover image failed to load; show music symbol instead. */
   coverError = signal(false);
+  /** Whether the queue list panel is visible. */
+  showQueue = signal(false);
+  /** Track IDs in queue whose cover image failed to load. */
+  queueCoverErrors = signal<Set<string>>(new Set());
   private timeupdateBound = (): void => this.onTimeUpdate();
   private playBound = (): void => this.player.setPlaying(true);
   private pauseBound = (): void => this.player.setPlaying(false);
@@ -137,6 +141,30 @@ export class PlayerBarComponent implements OnDestroy {
     const el = this.audioRef()?.nativeElement;
     if (el) el.currentTime = value;
     this.isSeeking.set(false);
+  }
+
+  toggleQueue(): void {
+    this.showQueue.update((v) => !v);
+  }
+
+  playFromQueue(index: number): void {
+    const list = this.player.queueList();
+    const track = list[index];
+    if (!track?.streamUrl) return;
+    if (this.isCurrentTrack(track.id)) {
+      this.player.togglePlayPause();
+    } else {
+      this.player.play(track);
+    }
+  }
+
+  onQueueCoverError(trackId: string): void {
+    this.queueCoverErrors.update((s) => new Set(s).add(trackId));
+  }
+
+  isCurrentTrack(trackId: string): boolean {
+    const np = this.player.nowPlaying();
+    return np?.track.id === trackId;
   }
 
   coverUrl(np: { coverArtUrl?: string }): string {

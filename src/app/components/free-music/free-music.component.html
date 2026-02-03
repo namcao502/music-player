@@ -39,7 +39,7 @@
       <h2 class="section-title">Results</h2>
       <div class="grid tracks-grid">
         @for (track of tracks(); track track.id) {
-          <button type="button" class="track-card" (click)="play(track)">
+          <button type="button" class="track-card" (click)="onTrackClick(track)">
             <div class="cover-wrap">
               @if (brokenCoverIds().has(track.id)) {
                 <div class="cover-fallback" aria-hidden="true">♪</div>
@@ -55,6 +55,29 @@
             <span class="duration">{{ formatDuration(track.duration) }}</span>
           </button>
         }
+      </div>
+      <div class="pagination">
+        <span class="pagination-info">Page {{ page() }}</span>
+        <div class="pagination-btns">
+          <button
+            type="button"
+            class="pagination-btn"
+            (click)="goToPrevPage()"
+            [disabled]="page() <= 1 || loading()"
+            aria-label="Previous page"
+          >
+            ‹ Previous
+          </button>
+          <button
+            type="button"
+            class="pagination-btn"
+            (click)="goToNextPage()"
+            [disabled]="!hasNextPage() || loading()"
+            aria-label="Next page"
+          >
+            Next ›
+          </button>
+        </div>
       </div>
     </section>
   } @else if (query()) {

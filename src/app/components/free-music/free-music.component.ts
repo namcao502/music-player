@@ -7,6 +7,7 @@ import type { PlayableTrack } from '../../services/player.service';
 
 const RECENT_SEARCHES_KEY = 'free-music-recent-searches';
 const MAX_RECENT_SEARCHES = 5;
+const PAGE_SIZE = 24;
 
 @Component({
   selector: 'app-free-music',
@@ -23,6 +24,10 @@ export class FreeMusicComponent implements OnInit {
   recentSearches = signal<string[]>([]);
   /** Track IDs whose cover image failed to load; show music symbol instead. */
   brokenCoverIds = signal<Set<string>>(new Set());
+  /** Current page (1-based). Only relevant when there are results. */
+  page = signal(1);
+  /** True when the last response had a full page (more may exist). */
+  hasNextPage = signal(false);
 
   constructor(
     private audius: AudiusApiService,
@@ -49,10 +54,34 @@ export class FreeMusicComponent implements OnInit {
     this.addToRecentSearches(q);
     this.error.set('');
     this.brokenCoverIds.set(new Set());
+    this.page.set(1);
+    this.loadPage(1);
+  }
+
+  goToPrevPage(): void {
+    const p = this.page();
+    if (p <= 1) return;
+    this.page.set(p - 1);
+    this.loadPage(p - 1);
+  }
+
+  goToNextPage(): void {
+    if (!this.hasNextPage()) return;
+    const p = this.page();
+    this.page.set(p + 1);
+    this.loadPage(p + 1);
+  }
+
+  private loadPage(pageNum: number): void {
+    const q = this.query().trim();
+    if (!q) return;
+    this.error.set('');
     this.loading.set(true);
-    this.audius.searchTracks(q, 24).subscribe({
+    const offset = (pageNum - 1) * PAGE_SIZE;
+    this.audius.searchTracks(q, PAGE_SIZE, offset).subscribe({
       next: (data) => {
         this.tracks.set(data);
+        this.hasNextPage.set(data.length === PAGE_SIZE);
         this.loading.set(false);
       },
       error: () => {
@@ -80,6 +109,15 @@ export class FreeMusicComponent implements OnInit {
       localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
     } catch {
       // Ignore quota or other storage errors
+    }
+  }
+
+  onTrackClick(track: AudiusTrack): void {
+    const np = this.player.nowPlaying();
+    if (np?.track.id === track.id) {
+      this.player.togglePlayPause();
+    } else {
+      this.play(track);
     }
   }
 
