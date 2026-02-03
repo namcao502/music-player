@@ -1,0 +1,9 @@
+<div class="app">
+  <button type="button" class="theme-toggle-top" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'">
+    {{ theme.isDark() ? '☀️' : '🌙' }}
+  </button>
+  <main class="main-content">
+    <router-outlet />
+  </main>
+  <app-player-bar />
+</div>

@@ -1,0 +1,132 @@
+/* Theme-aware styles with improved readability */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Dark theme – high contrast for readability */
+.theme-dark {
+  --spotify-green: #1db954;
+  --spotify-green-hover: #1ed760;
+  --spotify-green-rgb: 29, 185, 84;
+  --bg-base: #0f0f0f;
+  --bg-elevated: #141414;
+  --bg-card: #1a1a1a;
+  --bg-hover: #222;
+  --bg-active: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #b8b8b8;
+  --text-on-accent: #000000;
+  --border-subtle: rgba(255, 255, 255, 0.18);
+  --border-strong: rgba(255, 255, 255, 0.28);
+  --error: #e91429;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --focus-ring: rgba(255, 255, 255, 0.35);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --sidebar-width: 240px;
+  --player-bar-height: 90px;
+}
+
+/* Light theme – only when .theme-light is on <html> */
+.theme-light {
+  --spotify-green: #1db954;
+  --spotify-green-hover: #1ed760;
+  --spotify-green-rgb: 29, 185, 84;
+  --bg-base: #f6f6f7;
+  --bg-elevated: #ffffff;
+  --bg-card: #e8e8ea;
+  --bg-hover: #e0e0e2;
+  --bg-active: #d4d4d8;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+  --text-on-accent: #000000;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
+  --error: #e91429;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --focus-ring: rgba(0, 0, 0, 0.2);
+  --radius: 8px;
+  --radius-sm: 4px;
+  --sidebar-width: 240px;
+  --player-bar-height: 90px;
+}
+
+/* Fallback when no theme class – match dark so text is never invisible */
+:root:not(.theme-light):not(.theme-dark) {
+  --bg-base: #0f0f0f;
+  --bg-elevated: #141414;
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #b8b8b8;
+  --text-on-accent: #000000;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Ensure all text and surfaces use theme variables */
+.app {
+  color: var(--text-primary);
+  background: var(--bg-base);
+}
+
+.main-content {
+  color: var(--text-primary);
+  background: var(--bg-base);
+}
+
+h1, h2, h3 {
+  color: var(--text-primary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  &:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+  }
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  line-height: inherit;
+}
+
+/* Improve focus visibility for accessibility */
+:focus-visible {
+  outline: 2px solid var(--spotify-green);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--spotify-green);
+  outline-offset: 2px;
+}

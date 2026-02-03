@@ -1,0 +1,43 @@
+<audio #audioEl class="audio-el"></audio>
+@if (player.nowPlaying(); as np) {
+  <div class="player-bar">
+
+    <div class="now-playing">
+      @if (coverError()) {
+        <div class="cover-fallback" aria-hidden="true">♪</div>
+      } @else {
+        <img [src]="coverUrl(np.track)" [alt]="np.track.title" class="cover" (error)="coverError.set(true)" />
+      }
+      <div class="info">
+        <span class="title">{{ np.track.title }}</span>
+        @if (np.track.artist || np.track.album) {
+          <span class="meta">{{ np.track.artist }}{{ np.track.artist && np.track.album ? ' · ' : '' }}{{ np.track.album }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="center-controls">
+      <div class="controls">
+        <button type="button" (click)="player.previous()" aria-label="Previous">‹</button>
+        <button type="button" (click)="player.togglePlayPause()" [attr.aria-label]="player.isPlaying() ? 'Pause' : 'Play'">
+          {{ player.isPlaying() ? '‖' : '▶' }}
+        </button>
+        <button type="button" (click)="player.next()" aria-label="Next">›</button>
+      </div>
+      <div class="progress-wrap">
+        <span class="time time-current">{{ formatDuration(currentTime()) }}</span>
+        <input
+          type="range"
+          class="progress"
+          [min]="0"
+          [max]="duration() || 1"
+          [value]="currentTime()"
+          (input)="onSeekInput($any($event.target).valueAsNumber)"
+          (change)="onSeekChange($any($event.target).valueAsNumber)"
+          aria-label="Seek"
+        />
+        <span class="time time-total">{{ formatDuration(duration()) }}</span>
+      </div>
+    </div>
+  </div>
+}
