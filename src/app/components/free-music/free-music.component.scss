@@ -1,12 +1,11 @@
 .free-music {
-  padding: 2rem 2rem 6rem;
-  min-height: 100%;
+  padding: 1.5rem;
   font-size: 1rem;
   line-height: 1.5;
 }
 
 .header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 
   h1 {
     margin: 0 0 0.5rem;
@@ -130,22 +129,139 @@
 }
 
 .section-title {
-  margin: 0 0 1rem;
+  margin: 0 0 0.75rem;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.04em;
 }
 
+/* Fixed card width so every track artwork is the same size. */
+$track-cover-size: 160px;
+
 .tracks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, $track-cover-size);
+  gap: 1.25rem;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.track-card-wrap {
+  position: relative;
+  min-width: 0;
+  overflow: visible; /* allow dropdown to show outside card */
+}
+
+.add-to-playlist-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  opacity: 0.9;
+  z-index: 1;
+  transition: background 0.2s, opacity 0.2s;
+
+  .icon-plus {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    background: var(--spotify-green);
+    color: var(--text-on-accent);
+    opacity: 1;
+  }
+}
+
+/* Open to the right of the card so it doesn’t cover the track */
+.add-to-playlist-dropdown {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 0.5rem;
+  min-width: 220px;
+  max-width: 280px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 10;
+  padding: 0.5rem 0;
+  box-sizing: border-box;
+
+  /* When card is near right edge, open to the left instead */
+  &.dropdown-open-left {
+    left: auto;
+    right: 100%;
+    margin-left: 0;
+    margin-right: 0.5rem;
+  }
+}
+
+.dropdown-title {
+  margin: 0;
+  padding: 0.5rem 1rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dropdown-empty {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-sizing: border-box;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.dropdown-item-new {
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  font-weight: 600;
+  color: var(--spotify-green);
 }
 
 .track-card {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   padding: 0;
   background: transparent;
   border: none;
@@ -161,17 +277,21 @@
 
   .cover-wrap {
     position: relative;
+    width: $track-cover-size;
+    height: $track-cover-size;
+    flex-shrink: 0;
     margin-bottom: 0.75rem;
     border-radius: var(--radius);
     overflow: hidden;
     box-shadow: var(--shadow);
-    aspect-ratio: 1;
 
     .cover {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
       display: block;
+      vertical-align: middle;
     }
 
     .cover-fallback {
@@ -198,11 +318,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
       opacity: 0;
       transform: translateY(4px);
       transition: opacity 0.2s, transform 0.2s;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+
+      .icon-play {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
     }
   }
 
@@ -215,13 +339,17 @@
     display: -webkit-box;
     overflow: hidden;
     margin-bottom: 0.25rem;
+    min-width: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
+  /* Single-line ellipsis for artist; nowrap + overflow hidden works for long unbroken strings */
   .artist {
     font-size: 0.9375rem;
     color: var(--text-secondary);
     font-weight: 500;
-    -webkit-line-clamp: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -239,10 +367,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -250,6 +378,12 @@
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+.pagination-hint {
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 0.25rem;
 }
 
 .pagination-btns {

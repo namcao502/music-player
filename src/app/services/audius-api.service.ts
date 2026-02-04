@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
+import { environment } from '../../environments/environment';
 import type { AudiusTrack, AudiusSearchResponse, AudiusStreamResponse } from '../models/audius.models';
 
 const AUDIUS_APP_NAME = 'angular-music-player';
-
-/** Audius API base (official public endpoint). */
-const AUDIUS_API = 'https://api.audius.co';
 
 @Injectable({ providedIn: 'root' })
 export class AudiusApiService {
@@ -21,7 +19,7 @@ export class AudiusApiService {
       .set('limit', String(limit))
       .set('offset', String(offset))
       .set('app_name', AUDIUS_APP_NAME);
-    return this.http.get<AudiusSearchResponse>(`${AUDIUS_API}/v1/tracks/search`, { params }).pipe(
+    return this.http.get<AudiusSearchResponse>(`${environment.audiusApiUrl}/v1/tracks/search`, { params }).pipe(
       map((res) => res.data ?? []),
       catchError(() => of([]))
     );
@@ -34,7 +32,7 @@ export class AudiusApiService {
    */
   getStreamEndpointUrl(trackId: string): string {
     const params = new HttpParams().set('app_name', AUDIUS_APP_NAME);
-    return `${AUDIUS_API}/v1/tracks/${trackId}/stream?${params.toString()}`;
+    return `${environment.audiusApiUrl}/v1/tracks/${trackId}/stream?${params.toString()}`;
   }
 
   /** Get stream URL via API (may fail in browser due to CORS). Prefer getStreamEndpointUrl for playback. */
@@ -42,8 +40,23 @@ export class AudiusApiService {
     const params = new HttpParams()
       .set('app_name', AUDIUS_APP_NAME)
       .set('no_redirect', 'true');
-    return this.http.get<AudiusStreamResponse>(`${AUDIUS_API}/v1/tracks/${trackId}/stream`, { params }).pipe(
+    return this.http.get<AudiusStreamResponse>(`${environment.audiusApiUrl}/v1/tracks/${trackId}/stream`, { params }).pipe(
       map((res) => res.data ?? null),
+      catchError(() => of(null))
+    );
+  }
+
+  /** Fetch a single track by id (for playlists). */
+  getTrackById(trackId: string): Observable<AudiusTrack | null> {
+    if (!trackId?.trim()) return of(null);
+    const params = new HttpParams().set('app_name', AUDIUS_APP_NAME);
+    return this.http.get<{ data?: AudiusTrack } | AudiusTrack>(`${environment.audiusApiUrl}/v1/tracks/${trackId}`, { params }).pipe(
+      map((res): AudiusTrack | null => {
+        if (res && typeof res === 'object' && 'data' in res && res.data) return res.data as AudiusTrack;
+        if (res && typeof res === 'object' && 'id' in res && typeof (res as AudiusTrack).id === 'string')
+          return res as AudiusTrack;
+        return null;
+      }),
       catchError(() => of(null))
     );
   }

@@ -6,6 +6,37 @@
   color: var(--text-primary);
 }
 
+.app-nav {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  a {
+    padding: 0.5rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius);
+    transition: background 0.2s, color 0.2s;
+
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    &.active {
+      color: var(--text-primary);
+      background: var(--bg-card);
+    }
+  }
+}
+
 .theme-toggle-top {
   position: fixed;
   top: 1rem;
@@ -31,7 +62,7 @@
 }
 
 .main-content {
-  flex: 1;
+  flex: 0 0 auto;
   overflow-y: auto;
   padding-bottom: var(--player-bar-height);
 }

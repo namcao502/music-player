@@ -18,6 +18,8 @@ export interface NowPlaying {
   streamUrl: string;
 }
 
+export type LoopMode = 'off' | 'all' | 'one';
+
 /** Called synchronously from play() so that audio.play() runs in the same user gesture (avoids autoplay block). */
 export type PlaybackTrigger = (streamUrl: string, trackId: string) => void;
 
@@ -25,13 +27,16 @@ export type PlaybackTrigger = (streamUrl: string, trackId: string) => void;
 export class PlayerService {
   private current = signal<NowPlaying | null>(null);
   private queue = signal<PlayableTrack[]>([]);
-  private history = signal<PlayableTrack[]>([]);
   private playing = signal(false);
+  private shuffle = signal(false);
+  private loop = signal<LoopMode>('off');
   private playbackTrigger: PlaybackTrigger | null = null;
 
   nowPlaying = this.current.asReadonly();
   queueList = this.queue.asReadonly();
   isPlaying = this.playing.asReadonly();
+  shuffleEnabled = this.shuffle.asReadonly();
+  loopMode = this.loop.asReadonly();
 
   constructor() {}
 
@@ -59,6 +64,14 @@ export class PlayerService {
     this.playing.update((p) => !p);
   }
 
+  toggleShuffle(): void {
+    this.shuffle.update((v) => !v);
+  }
+
+  cycleLoopMode(): void {
+    this.loop.update((m) => (m === 'off' ? 'all' : m === 'all' ? 'one' : 'off'));
+  }
+
   /** Sync play state from audio element (e.g. user paused in browser). */
   setPlaying(value: boolean): void {
     this.playing.set(value);
@@ -73,30 +86,67 @@ export class PlayerService {
     this.current.set(null);
   }
 
+  /** Called by the player bar when the audio element fires "ended". */
+  handleEnded(): void {
+    const mode = this.loop();
+    if (mode === 'one') {
+      const now = this.current();
+      if (now) this.play(now.track, now.streamUrl);
+      return;
+    }
+    this.next();
+  }
+
   next(): void {
     const list = this.queue();
     const now = this.current();
     if (!now || list.length === 0) return;
     const idx = list.findIndex((s) => s.id === now.track.id);
+    const mode = this.loop();
+    if (this.shuffle()) {
+      const nextTrack = this.pickRandomDifferent(list, now.track.id);
+      this.play(nextTrack);
+      return;
+    }
     const nextIdx = idx < 0 ? 0 : idx + 1;
     if (nextIdx < list.length) {
-      this.history.update((h) => [...h, now.track]);
       this.play(list[nextIdx]);
+      return;
     }
+    if (mode === 'all') {
+      this.play(list[0]);
+      return;
+    }
+    // loop=off: stop at end of queue (keep current track visible)
+    this.playing.set(false);
   }
 
   previous(): void {
+    const list = this.queue();
     const now = this.current();
-    const hist = this.history();
-    if (hist.length > 0 && now) {
-      const prevSong = hist[hist.length - 1];
-      this.history.update((h) => h.slice(0, -1));
-      this.play(prevSong);
+    if (!now || list.length === 0) return;
+    if (this.shuffle()) {
+      const prevTrack = this.pickRandomDifferent(list, now.track.id);
+      this.play(prevTrack);
+      return;
     }
+    const idx = list.findIndex((s) => s.id === now.track.id);
+    const prevIdx = idx <= 0 ? list.length - 1 : idx - 1;
+    this.play(list[prevIdx]);
   }
 
   clearQueue(): void {
     this.queue.set([]);
-    this.history.set([]);
+  }
+
+  private pickRandomDifferent(list: PlayableTrack[], currentId: string): PlayableTrack {
+    if (list.length <= 1) return list[0];
+    let candidate = list[0];
+    // Try a few times to avoid picking the same track; fallback to first different.
+    for (let i = 0; i < 8; i++) {
+      candidate = list[Math.floor(Math.random() * list.length)];
+      if (candidate.id !== currentId) return candidate;
+    }
+    return list.find((t) => t.id !== currentId) ?? list[0];
   }
 }

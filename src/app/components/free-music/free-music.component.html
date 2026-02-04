@@ -39,25 +39,73 @@
       <h2 class="section-title">Results</h2>
       <div class="grid tracks-grid">
         @for (track of tracks(); track track.id) {
-          <button type="button" class="track-card" (click)="onTrackClick(track)">
-            <div class="cover-wrap">
-              @if (brokenCoverIds().has(track.id)) {
-                <div class="cover-fallback" aria-hidden="true">♪</div>
-              } @else {
-                <img [src]="artworkUrl(track)" [alt]="track.title" class="cover" (error)="onCoverError(track.id)" />
+          <div class="track-card-wrap">
+            <button type="button" class="track-card" (click)="onTrackClick(track)">
+              <div class="cover-wrap">
+                @if (brokenCoverIds().has(track.id)) {
+                  <div class="cover-fallback" aria-hidden="true">♪</div>
+                } @else {
+                  <img [src]="artworkUrl(track)" [alt]="track.title" class="cover" (error)="onCoverError(track.id)" />
+                }
+                <span class="play-overlay" aria-hidden="true">
+                <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5z"/></svg>
+              </span>
+              </div>
+              <span class="name">{{ track.title }}</span>
+              @if (track.user?.name) {
+                <span class="artist">{{ track.user?.name }}</span>
               }
-              <span class="play-overlay">▶</span>
-            </div>
-            <span class="name">{{ track.title }}</span>
-            @if (track.user?.name) {
-              <span class="artist">{{ track.user?.name }}</span>
+              <span class="duration">{{ formatDuration(track.duration) }}</span>
+            </button>
+            <button
+              type="button"
+              class="add-to-playlist-btn"
+              (click)="openAddToPlaylist(track.id, $event)"
+              [attr.aria-expanded]="addToPlaylistTrackId() === track.id"
+              aria-label="Add to playlist"
+              title="Add to playlist"
+            >
+              <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            @if (addToPlaylistTrackId() === track.id) {
+              <div
+                class="add-to-playlist-dropdown"
+                [class.dropdown-open-left]="addToPlaylistDropdownLeft()"
+                (click)="$event.stopPropagation()"
+              >
+                <p class="dropdown-title">Add to playlist</p>
+                @if (playlistService.playlistsList().length === 0) {
+                  <p class="dropdown-empty">No playlists yet.</p>
+                } @else {
+                  @for (playlist of playlistService.playlistsList(); track playlist.id) {
+                    <button
+                      type="button"
+                      class="dropdown-item"
+                      (click)="addTrackToPlaylist(playlist.id, track.id)"
+                    >
+                      {{ playlist.name }}
+                    </button>
+                  }
+                }
+                <button
+                  type="button"
+                  class="dropdown-item dropdown-item-new"
+                  (click)="createPlaylistAndAddTrack(track.id)"
+                >
+                  Create new playlist
+                </button>
+              </div>
             }
-            <span class="duration">{{ formatDuration(track.duration) }}</span>
-          </button>
+          </div>
         }
       </div>
       <div class="pagination">
-        <span class="pagination-info">Page {{ page() }}</span>
+        <span class="pagination-info">
+          Page {{ page() }}
+          @if (!hasNextPage() && page() === 1 && tracks().length > 0) {
+            <span class="pagination-hint">(one page — {{ tracks().length }} results)</span>
+          }
+        </span>
         <div class="pagination-btns">
           <button
             type="button"
@@ -80,8 +128,6 @@
         </div>
       </div>
     </section>
-  } @else if (query()) {
-    <p class="empty">No tracks found. Try another search.</p>
   } @else {
     <p class="empty">Enter a search term and click Search to find free music.</p>
   }

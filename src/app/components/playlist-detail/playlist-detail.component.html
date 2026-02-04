@@ -1,0 +1,33 @@
+<div class="playlist-detail">
+  @if (playlist(); as p) {
+    <header class="header">
+      <button type="button" class="back-btn" (click)="back()">← Playlists</button>
+      <h1>{{ p.name }}</h1>
+      <p class="meta">{{ p.trackIds.length }} track{{ p.trackIds.length === 1 ? '' : 's' }}</p>
+      <div class="header-actions">
+        <button type="button" class="btn-primary" (click)="play()" [disabled]="p.trackIds.length === 0">Play</button>
+        <button type="button" class="btn-secondary" (click)="rename()">Rename</button>
+        <button type="button" class="btn-secondary danger" (click)="deletePlaylist()">Delete playlist</button>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <p class="loading">Loading tracks…</p>
+    } @else if (tracks().length === 0) {
+      <p class="empty">No tracks. Add tracks from Free Music.</p>
+    } @else {
+      <ul class="track-list">
+        @for (track of tracks(); track track.id) {
+          <li class="track-item">
+            <span class="track-title">{{ track.title }}</span>
+            @if (track.user?.name) {
+              <span class="track-artist">{{ track.user?.name }}</span>
+            }
+            <span class="track-duration">{{ formatDuration(track.duration) }}</span>
+            <button type="button" class="btn-remove" (click)="removeTrack(track.id)" title="Remove from playlist">×</button>
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

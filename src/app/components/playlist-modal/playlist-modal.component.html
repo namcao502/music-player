@@ -1,0 +1,32 @@
+@if (modal.promptConfig(); as config) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="presentation">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-prompt-title" (click)="$event.stopPropagation()">
+      <h2 id="modal-prompt-title" class="modal-title">{{ config.title }}</h2>
+      <input
+        type="text"
+        class="modal-input"
+        [ngModel]="promptValue()"
+        (ngModelChange)="promptValue.set($event)"
+        (keydown.enter)="onPromptSubmit()"
+        (keydown.escape)="onPromptCancel()"
+        [attr.aria-label]="config.title"
+        autofocus
+      />
+      <div class="modal-actions">
+        <button type="button" class="modal-btn primary" (click)="onPromptSubmit()">OK</button>
+        <button type="button" class="modal-btn secondary" (click)="onPromptCancel()">Cancel</button>
+      </div>
+    </div>
+  </div>
+}
+@if (modal.confirmConfig(); as confirmCfg) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="presentation">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-message" (click)="$event.stopPropagation()">
+      <p id="modal-confirm-message" class="modal-message">{{ confirmCfg.message }}</p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn danger" (click)="onConfirmYes()">{{ confirmCfg.confirmLabel }}</button>
+        <button type="button" class="modal-btn secondary" (click)="onConfirmNo()">Cancel</button>
+      </div>
+    </div>
+  </div>
+}

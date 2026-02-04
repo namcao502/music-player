@@ -80,17 +80,62 @@ describe('PlayerService', () => {
     expect(service.nowPlaying()!.track.id).toBe('c');
   });
 
-  it('P8: next() at end of queue does nothing', () => {
-    service.playQueue([trackA], 0);
+  it('P8: next() at end of queue stops when loop=off', () => {
+    service.playQueue([trackA, trackB, trackC], 2); // now c
+    service.next();
+    expect(service.nowPlaying()!.track.id).toBe('c');
+    expect(service.isPlaying()).toBe(false);
+  });
+
+  it('P8b: next() at end wraps when loop=all', () => {
+    service.playQueue([trackA, trackB, trackC], 2); // now c
+    service.cycleLoopMode(); // off -> all
     service.next();
     expect(service.nowPlaying()!.track.id).toBe('a');
   });
 
-  it('P9: previous() goes back from history', () => {
+  it('P8c: handleEnded repeats current track when loop=one', () => {
+    service.playQueue([trackA, trackB, trackC], 1); // now b
+    service.cycleLoopMode(); // off -> all
+    service.cycleLoopMode(); // all -> one
+    service.handleEnded();
+    expect(service.nowPlaying()!.track.id).toBe('b');
+    expect(service.isPlaying()).toBe(true);
+  });
+
+  it('P9: previous() goes to previous item in queue', () => {
     service.playQueue([trackA, trackB], 0);
-    service.next(); // now b
+    service.next(); // now b (index 1)
     service.previous();
     expect(service.nowPlaying()!.track.id).toBe('a');
+  });
+
+  it('P9b: previous() from middle goes to previous index', () => {
+    service.playQueue([trackA, trackB, trackC], 2); // now c (index 2)
+    service.previous();
+    expect(service.nowPlaying()!.track.id).toBe('b');
+  });
+
+  it('P10b: previous() at start of queue wraps to end', () => {
+    service.playQueue([trackA, trackB, trackC], 0); // now a
+    service.previous();
+    expect(service.nowPlaying()!.track.id).toBe('c');
+  });
+
+  it('P11: toggleShuffle flips shuffleEnabled', () => {
+    expect(service.shuffleEnabled()).toBe(false);
+    service.toggleShuffle();
+    expect(service.shuffleEnabled()).toBe(true);
+  });
+
+  it('P12: cycleLoopMode cycles off -> all -> one -> off', () => {
+    expect(service.loopMode()).toBe('off');
+    service.cycleLoopMode();
+    expect(service.loopMode()).toBe('all');
+    service.cycleLoopMode();
+    expect(service.loopMode()).toBe('one');
+    service.cycleLoopMode();
+    expect(service.loopMode()).toBe('off');
   });
 
   it('P10: registerPlaybackTrigger callback called on play', () => {
