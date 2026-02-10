@@ -1,34 +1,17 @@
-# Music Player (Angular)
+# Free Music Player
 
-A simple Angular web app that plays **free music** from [Audius](https://audius.org/): search and stream royalty-free tracks with no login and no backend required.
-
----
-
-## Free Music (no backend required)
-
-When you open the app, you land straight on the **Free Music** page. Music is streamed from Audius (free, open API, no account needed).
-
-- **Search** by track name or artist; click **Search** or press Enter.
-- **Recent searches**: up to 5 recent search terms are shown as chips; click one to run that search again (stored in `localStorage`).
-- **Play**: click a track to play; search results become the playback queue so you can use previous/next in the player bar.
-- **Add to playlist**: use the **+** button on a track to open a dropdown and add the track to an existing playlist (playlists are created under **Playlists** and stored in `localStorage`).
-- **Keyboard**: when something is playing, use **Space** (play/pause), **←** (previous), **→** (next). Shortcuts are disabled while typing in the search box.
-- **Theme**: light/dark toggle in the top-right corner.
-- **Playlists**: from the nav, open **Playlists** to create playlists, add tracks from Free Music, play a playlist, rename, or delete.
+A browser-based music player built with Angular that streams **free, royalty-free music** from [Audius](https://audius.org/). No login, no backend, no ads.
 
 ---
 
-## How to run this project
-
-### Install and run (frontend only)
+## How to run
 
 ```bash
-cd music-player
 npm install
 npm start
 ```
 
-Open http://localhost:4200. Use the nav to switch between **Free Music** and **Playlists**.
+Open http://localhost:4200.
 
 ### Build for production
 
@@ -36,30 +19,126 @@ Open http://localhost:4200. Use the nav to switch between **Free Music** and **P
 npm run build
 ```
 
-Output is in `dist/music-player/browser/`. Serve that folder with any static file server.
+Output is in `dist/music-player/browser/`. Serve with any static file server. PWA features (offline, install) require HTTPS.
+
+### Run tests
+
+```bash
+npm test
+```
+
+127 unit tests (Jasmine + Karma).
 
 ---
 
 ## Features
 
-- **Free Music**: Search Audius, play tracks, queue from search results. Add tracks to playlists via the + button on each result.
-- **Playlists**: Create playlists (stored in `localStorage`), add tracks from Free Music, play/rename/delete. No backend.
-- **Recent searches**: Up to 5 recent search terms; click to re-run (persisted in `localStorage`).
-- **Player bar**: Fixed at the bottom with cover, title, artist, play/pause, previous/next, seekable progress bar. Keyboard: Space (play/pause), Arrow Left (previous), Arrow Right (next).
-- **Theme**: Light/dark mode with toggle in top-right corner; preference stored in `localStorage`.
+### Music Discovery
 
-### Documentation
+- **Search** millions of tracks on Audius by keyword with paginated results (24 per page).
+- **Trending** — browse the top 50 trending tracks.
+- **Artist pages** — click any artist name to see their full track list.
+- **Sort** search results by relevance, duration, or artist name.
+- **Recent searches** — last 5 searches saved as clickable chips.
 
-- **Plans:** `docs/FREE_MUSIC_PLAN.md` (Free Music feature), `docs/PLAYLIST_PLAN.md` (Playlists).
-- **Testing:** `docs/TEST_PLAN.md` – test cases and how to run tests.
+### Playback
 
-### Project structure
+- **Player bar** at the bottom with cover art, title, artist, play/pause, previous/next, and seekbar.
+- **Queue** — click a track to play; the full page becomes the queue. Open "Up Next" panel to manage.
+- **Shuffle** and **Loop** (off / loop all / loop one).
+- **Volume control** with dynamic speaker icon.
+- **Crossfade** — smooth fade between tracks (0–12 seconds, configurable in queue panel).
+- **Keyboard shortcuts** — Space (play/pause), Left/Right arrows (previous/next).
 
-- `src/app/services/audius-api.service.ts` – Audius API: search tracks, get track by id, stream URLs, artwork.
-- `src/app/services/player.service.ts` – Playback state, queue, play/playQueue/toggle/next/previous.
-- `src/app/services/playlist.service.ts` – Playlists CRUD and track resolution (localStorage).
-- `src/app/components/free-music` – Search, recent searches, results grid, play, add to playlist.
-- `src/app/components/playlist-list` – List playlists, create/play/rename/delete.
-- `src/app/components/playlist-detail` – View playlist tracks, play, remove track, rename/delete.
-- `src/app/components/player-bar` – Now playing and controls.
-- `src/app/services/theme.service.ts` – Light/dark theme.
+### Playlists
+
+- Create, rename, and delete playlists.
+- Add tracks from search results, trending, or the queue panel.
+- Reorder tracks (move up/down) in playlist detail.
+- **Export** playlists as JSON files; **import** from JSON.
+
+### Favorites
+
+- Heart icon on every track to mark as favorite.
+- Dedicated **Favorites page** to view, play, and manage all liked tracks.
+
+### Play History
+
+- Automatically records the last 50 played tracks with timestamps.
+- Replay any track from the **History page**; clear with one click.
+
+### Theming
+
+- Dark mode (default) and Light mode, toggled via the sun/moon button.
+- Respects OS preference on first visit; persists across sessions.
+
+### Responsive & PWA
+
+- Mobile-friendly layout at screen widths below 640px.
+- **Installable** as a Progressive Web App (Add to Home Screen).
+- **Offline support** — app shell cached via Angular Service Worker; API responses cached for 1 hour.
+
+---
+
+## Navigation
+
+| Tab | Route | Description |
+|-----|-------|-------------|
+| Free Music | `/free-music` | Search and stream (default) |
+| Trending | `/trending` | Top 50 trending tracks |
+| Playlists | `/playlists` | Manage playlists |
+| Favorites | `/favorites` | Liked tracks |
+| History | `/history` | Recently played |
+
+Additional routes: `/playlists/:id` (playlist detail), `/artist/:id` (artist page).
+
+---
+
+## Project structure
+
+```
+src/app/
+  components/
+    free-music/       Search, results grid, sort, add to playlist
+    trending/         Trending tracks list
+    artist/           Artist page with track list
+    playlist-list/    Playlist management (create, import, play)
+    playlist-detail/  Single playlist (reorder, export, play)
+    favorites/        Favorited tracks list
+    history/          Play history with timestamps
+    player-bar/       Now playing, queue panel, crossfade, volume
+    playlist-modal/   Prompt and confirm dialogs
+  services/
+    audius-api        Audius API (search, tracks, streaming, artwork)
+    player            Playback state, queue, shuffle, loop, crossfade
+    playlist          Playlist CRUD, import/export (localStorage)
+    favorites         Favorite track IDs (localStorage)
+    history           Play history with auto-recording (localStorage)
+    theme             Light/dark theme (localStorage)
+    free-music-state  In-memory search state persistence
+    playlist-modal    Modal dialog state
+  models/
+    audius.models     Audius API response types
+    playlist.model    Playlist interface
+```
+
+## Documentation
+
+- [Features](docs/FEATURES.md) — full feature list with details
+- [Workflow](docs/WORKFLOW.md) — end-to-end app workflow and data flow
+- [Free Music Design](docs/FREE_MUSIC_PLAN.md) — Free Music module design
+- [Playlist Design](docs/PLAYLIST_PLAN.md) — Playlist module design
+- [Test Plan](docs/TEST_PLAN.md) — test cases and verification
+
+## Data storage
+
+All user data is stored in the browser's `localStorage`:
+
+| Key | Data |
+|-----|------|
+| `music-player-playlists` | Playlists (name + track IDs) |
+| `music-player-theme` | Theme preference |
+| `music-player-favorites` | Favorite track IDs |
+| `music-player-history` | Last 50 played tracks |
+| `free-music-recent-searches` | Last 5 search queries |
+| `crossfade-duration` | Crossfade setting (0–12s) |
