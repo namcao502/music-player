@@ -1,0 +1,52 @@
+<div class="trending-page">
+  <header class="header">
+    <h1>Trending</h1>
+    <p class="subtitle">Top tracks on Audius right now</p>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading trending tracks…</p>
+    </div>
+  } @else if (tracks().length > 0) {
+    <ul class="track-list">
+      @for (track of tracks(); track track.id; let i = $index) {
+        <li class="track-item" (click)="onTrackClick(track)" role="button" tabindex="0" (keydown.enter)="onTrackClick(track)">
+          <span class="track-index">{{ i + 1 }}</span>
+          <div class="track-cover">
+            @if (brokenCoverIds().has(track.id)) {
+              <span class="cover-fallback">♪</span>
+            } @else {
+              <img [src]="artworkUrl(track)" [alt]="" (error)="onCoverError(track.id)" />
+            }
+          </div>
+          <div class="track-info">
+            <span class="track-title">{{ track.title }}</span>
+            @if (track.user?.name) {
+              <a class="track-artist artist-link" [routerLink]="['/artist', track.user!.id]" (click)="$event.stopPropagation()">{{ track.user?.name }}</a>
+            }
+          </div>
+          <span class="track-duration">{{ formatDuration(track.duration) }}</span>
+          <button
+            type="button"
+            class="fav-btn"
+            [class.is-fav]="favoritesService.isFavorite(track.id)"
+            (click)="toggleFavorite(track.id, $event)"
+            [attr.aria-label]="favoritesService.isFavorite(track.id) ? 'Remove from favorites' : 'Add to favorites'"
+          >
+            <svg class="icon-heart" viewBox="0 0 24 24" aria-hidden="true">
+              @if (favoritesService.isFavorite(track.id)) {
+                <path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              } @else {
+                <path fill="none" stroke="currentColor" stroke-width="2" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              }
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="empty">No trending tracks available.</p>
+  }
+</div>

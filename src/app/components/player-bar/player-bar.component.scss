@@ -267,8 +267,53 @@
   }
 }
 
-.queue-toggle-wrap {
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   flex-shrink: 0;
+}
+
+.volume-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  .icon-volume {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+}
+
+.volume-slider {
+  width: 80px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-card);
+  border-radius: 3px;
+  outline: none;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    cursor: pointer;
+    border: none;
+  }
 }
 
 .queue-btn {
@@ -334,6 +379,31 @@
   font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.queue-panel-duration {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-left: auto;
+  margin-right: 0.5rem;
+}
+
+.queue-panel-clear {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin-right: 0.5rem;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    color: var(--error);
+    background: var(--bg-hover);
+  }
 }
 
 .queue-panel-close {
@@ -434,6 +504,36 @@
     color: var(--spotify-green);
     font-weight: 600;
   }
+
+  .queue-item-index {
+    display: none;
+  }
+}
+
+.queue-now-playing-anim {
+  grid-row: 1 / -1;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 16px;
+
+  .eq-bar {
+    width: 3px;
+    background: var(--spotify-green);
+    border-radius: 1px;
+    animation: eq-bounce 0.8s ease-in-out infinite alternate;
+
+    &:nth-child(1) { animation-delay: 0s; height: 8px; }
+    &:nth-child(2) { animation-delay: 0.2s; height: 14px; }
+    &:nth-child(3) { animation-delay: 0.4s; height: 6px; }
+  }
+}
+
+@keyframes eq-bounce {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
 }
 
 .queue-item-index {
@@ -558,4 +658,123 @@
   padding-top: 0.5rem;
   font-weight: 600;
   color: var(--spotify-green);
+}
+
+.queue-panel-footer {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.crossfade-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.crossfade-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-card);
+  border-radius: 3px;
+  outline: none;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    cursor: pointer;
+    border: none;
+  }
+}
+
+.crossfade-value {
+  min-width: 1.75rem;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Responsive: mobile */
+@media (max-width: 640px) {
+  .player-bar {
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+  }
+
+  .now-playing {
+    flex: 0 0 auto;
+    max-width: 120px;
+
+    .now-playing-cover-btn {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+    }
+
+    .info .title {
+      font-size: 0.8rem;
+    }
+
+    .info .meta {
+      display: none;
+    }
+  }
+
+  .center-controls {
+    max-width: none;
+  }
+
+  .controls {
+    gap: 0.25rem;
+
+    button {
+      width: 28px;
+      height: 28px;
+    }
+
+    button.control-play-pause {
+      width: 32px;
+      height: 32px;
+    }
+
+    button.control-toggle {
+      display: none;
+    }
+  }
+
+  .right-controls {
+    gap: 0.25rem;
+  }
+
+  .volume-wrap {
+    display: none;
+  }
+
+  .queue-btn span {
+    display: none;
+  }
+
+  .queue-panel {
+    width: 100%;
+    right: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+    max-height: 60vh;
+  }
 }

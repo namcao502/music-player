@@ -72,8 +72,13 @@
     border-radius: 500px;
     cursor: pointer;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: var(--bg-hover);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     &.danger:hover {
@@ -128,6 +133,37 @@
     flex: 0 0 auto;
     font-size: 0.875rem;
     color: var(--text-muted);
+  }
+
+  .track-reorder {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .btn-move {
+    width: 24px;
+    height: 18px;
+    padding: 0;
+    font-size: 0.625rem;
+    line-height: 1;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+
+    &:hover:not(:disabled) {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
   }
 
   .btn-remove {

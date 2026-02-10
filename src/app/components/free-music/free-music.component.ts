@@ -1,11 +1,12 @@
-import { Component, HostListener, OnInit, signal } from '@angular/core';
+import { Component, HostListener, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AudiusApiService } from '../../services/audius-api.service';
 import { FreeMusicStateService } from '../../services/free-music-state.service';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlayerService } from '../../services/player.service';
 import { PlaylistService } from '../../services/playlist.service';
+import { FavoritesService } from '../../services/favorites.service';
 import type { AudiusTrack } from '../../models/audius.models';
 import type { PlayableTrack } from '../../services/player.service';
 
@@ -16,7 +17,7 @@ const PAGE_SIZE = 24;
 @Component({
   selector: 'app-free-music',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './free-music.component.html',
   styleUrl: './free-music.component.scss'
 })
@@ -36,6 +37,19 @@ export class FreeMusicComponent implements OnInit {
   addToPlaylistTrackId = signal<string | null>(null);
   /** When true, open dropdown to the left of the button (e.g. card near right edge). */
   addToPlaylistDropdownLeft = signal(false);
+  /** Sort mode for results. */
+  sortMode = signal<'default' | 'duration-asc' | 'duration-desc' | 'artist'>('default');
+  /** Whether the custom sort dropdown is open. */
+  sortDropdownOpen = signal(false);
+  /** Sorted tracks based on sortMode. */
+  sortedTracks = computed(() => {
+    const list = [...this.tracks()];
+    const mode = this.sortMode();
+    if (mode === 'duration-asc') return list.sort((a, b) => a.duration - b.duration);
+    if (mode === 'duration-desc') return list.sort((a, b) => b.duration - a.duration);
+    if (mode === 'artist') return list.sort((a, b) => (a.user?.name ?? '').localeCompare(b.user?.name ?? ''));
+    return list;
+  });
 
   constructor(
     private audius: AudiusApiService,
@@ -43,6 +57,7 @@ export class FreeMusicComponent implements OnInit {
     public playlistService: PlaylistService,
     private freeMusicState: FreeMusicStateService,
     private playlistModal: PlaylistModalService,
+    public favoritesService: FavoritesService,
     private router: Router
   ) {}
 
@@ -136,6 +151,15 @@ export class FreeMusicComponent implements OnInit {
     this.onSearch();
   }
 
+  clearRecentSearches(): void {
+    this.recentSearches.set([]);
+    try {
+      localStorage.removeItem(RECENT_SEARCHES_KEY);
+    } catch {
+      // Ignore
+    }
+  }
+
   onCoverError(trackId: string): void {
     this.brokenCoverIds.update((s) => new Set(s).add(trackId));
     this.saveStateToService();
@@ -215,12 +239,38 @@ export class FreeMusicComponent implements OnInit {
     this.router.navigate(['/playlists', id]);
   }
 
+  toggleFavorite(trackId: string, e: Event): void {
+    e.stopPropagation();
+    this.favoritesService.toggle(trackId);
+  }
+
   closeAddToPlaylist(): void {
     this.addToPlaylistTrackId.set(null);
+  }
+
+  toggleSortDropdown(e: Event): void {
+    e.stopPropagation();
+    this.sortDropdownOpen.update((v) => !v);
+  }
+
+  selectSortMode(mode: 'default' | 'duration-asc' | 'duration-desc' | 'artist'): void {
+    this.sortMode.set(mode);
+    this.sortDropdownOpen.set(false);
+  }
+
+  sortLabel(): string {
+    const labels: Record<string, string> = {
+      'default': 'Default',
+      'duration-asc': 'Duration (short first)',
+      'duration-desc': 'Duration (long first)',
+      'artist': 'Artist name'
+    };
+    return labels[this.sortMode()] ?? 'Default';
   }
 
   @HostListener('document:click')
   onDocumentClick(): void {
     this.closeAddToPlaylist();
+    this.sortDropdownOpen.set(false);
   }
 }

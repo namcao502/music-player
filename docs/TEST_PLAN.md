@@ -1,32 +1,43 @@
 # Music Player – Test Plan
 
-This document defines the test plan and test cases per module for the Free Music app. Tests are unit tests using Jasmine and Karma.
+This document defines the test plan and test cases per module for the Music Player app. Tests are unit tests using Jasmine and Karma (Angular CLI).
 
-**Process:** For each feature or bugfix request, update this plan (§3 test cases) and the corresponding `.spec.ts` files, then run the full test suite.
+**Process:** For each feature or bugfix, update this plan and the corresponding `.spec.ts` files, then run the full test suite.
 
 ---
 
 ## 1. Modules under test
 
-| Module | Type | Purpose |
-|--------|------|---------|
-| **ThemeService** | Service | Light/dark theme; localStorage; apply class on document. |
-| **AudiusApiService** | Service | Search tracks, get stream URL, get artwork URL. |
-| **PlayerService** | Service | Now playing, queue, play/playQueue/toggle/next/previous. |
-| **AppComponent** | Component | Root layout: theme toggle (top right), outlet, player bar. Keyboard: Space = play/pause, Arrow Right = next, Arrow Left = previous (when not typing in an input). |
-| **FreeMusicComponent** | Component | Search, recent searches (up to 5), results grid, play, add to playlist. |
-| **PlayerBarComponent** | Component | Audio element, cover (click to play/pause), play/pause/prev/next, seek bar, queue panel. New track auto-plays (startPlayWhenReady + retry on next user gesture if blocked). Play/pause and seekbar stay in sync. |
+| Module | Type | Spec file | Status |
+|--------|------|-----------|--------|
+| **ThemeService** | Service | `services/theme.service.spec.ts` | Tested (T1–T5) |
+| **AudiusApiService** | Service | `services/audius-api.service.spec.ts` | Tested (A1–A6) |
+| **PlayerService** | Service | `services/player.service.spec.ts` | Tested (P1–P12) |
+| **AppComponent** | Component | `app.component.spec.ts` | Tested (R1–R7) |
+| **FreeMusicComponent** | Component | `components/free-music/free-music.component.spec.ts` | Tested (F1–F20) |
+| **PlayerBarComponent** | Component | `components/player-bar/player-bar.component.spec.ts` | Tested (B1–B10) |
+| **PlaylistService** | Service | `services/playlist.service.spec.ts` | Tested (PL1–PL13) |
+| **PlaylistListComponent** | Component | `components/playlist-list/playlist-list.component.spec.ts` | Tested (LL1–LL9) |
+| **PlaylistDetailComponent** | Component | `components/playlist-detail/playlist-detail.component.spec.ts` | Tested (PD1–PD9) |
+| **PlaylistModalService** | Service | `services/playlist-modal.service.spec.ts` | Tested (PM1–PM5) |
+| **PlaylistModalComponent** | Component | `components/playlist-modal/playlist-modal.component.spec.ts` | Tested (MC1–MC5) |
+| **FreeMusicStateService** | Service | — | Not tested (trivial signal holder) |
 
 ---
 
 ## 2. Test plan summary
 
-- **ThemeService**: Pure logic and DOM/localStorage; mock `localStorage` and `document.documentElement` where needed.
-- **AudiusApiService**: HTTP calls; use `HttpClientTestingController` to assert requests and return fake data.
-- **PlayerService**: No external deps; assert signals and method side effects. Next/Previous use queue order only (index-based, no history).
-- **AppComponent**: Shallow test; ensure template renders, theme toggle (top right), and keyboard shortcuts (Space, ArrowLeft, ArrowRight) call player when nowPlaying is set; no action when focus is on input or when nothing is playing.
-- **FreeMusicComponent**: Mock `AudiusApiService`, `PlayerService`, `PlaylistService`, `FreeMusicStateService`, `PlaylistModalService`, `Router`; test search (with pagination offset), recent searches, onTrackClick (same track → togglePlayPause, else play), pagination (next and prev), broken cover fallback, add-to-playlist (open/close, addTrackToPlaylist, createPlaylistAndAddTrack with modal + navigate), state restore from FreeMusicStateService, document click closes dropdown.
-- **PlayerBarComponent**: Use real `PlayerService` where needed; test formatDuration, coverUrl, toggleQueue, playFromQueue, isCurrentTrack, onQueueCoverError. Play/pause icon and seekbar reflect player.isPlaying() and currentTime()/duration(); avoid heavy audio/effect testing.
+- **ThemeService**: Pure logic and DOM/localStorage; mock `localStorage` and `window.matchMedia`.
+- **AudiusApiService**: HTTP calls; use `HttpClientTestingModule` / `HttpTestingController`.
+- **PlayerService**: No external deps; assert signals and method side effects. Includes shuffle, loop mode, and `handleEnded()`.
+- **AppComponent**: Shallow test; ensure template renders, theme toggle, and keyboard shortcuts (Space, ArrowLeft, ArrowRight) call player when `nowPlaying` is set. Also tests that media keys work when a range input (seekbar) is focused.
+- **FreeMusicComponent**: Mock all dependencies; test search (with pagination offset), recent searches, `onTrackClick` (same vs. different track), pagination (next/prev), broken cover fallback, add-to-playlist (open/close, addTrackToPlaylist, createPlaylistAndAddTrack with modal + navigate), state restore from `FreeMusicStateService`, document click closes dropdown.
+- **PlayerBarComponent**: Use real `PlayerService`; test `formatDuration`, `coverUrl`, `toggleQueue`, `playFromQueue`, `isCurrentTrack`, `onQueueCoverError`. Avoid heavy audio/effect testing.
+- **PlaylistService**: Mock localStorage and `AudiusApiService`; test CRUD (create, rename, delete, addTrack, removeTrack), `getPlayableTracks()`, persistence.
+- **PlaylistListComponent**: Mock service, player, router, modal; test create, play, rename, delete, open.
+- **PlaylistDetailComponent**: Mock services; test init (missing id redirects), loadTracks, play, removeTrack, rename, delete, back.
+- **PlaylistModalService**: Test openPrompt/closePrompt, openConfirm/closeConfirm, opening one clears the other.
+- **PlaylistModalComponent**: Mock service; test prompt submit/cancel, confirm yes/no, backdrop click.
 
 ---
 
@@ -34,94 +45,161 @@ This document defines the test plan and test cases per module for the Free Music
 
 ### 3.1 ThemeService
 
-| ID | Description | Steps / Assertions |
-|----|-------------|--------------------|
-| T1 | Initial theme from localStorage | If `localStorage` has `music-player-theme` = 'light' or 'dark', initial theme matches. |
-| T2 | Initial theme from prefers-color-scheme | If no stored theme, use `prefers-color-scheme: light` → 'light', else 'dark'. |
-| T3 | setTheme(theme) updates signal and applies class | setTheme('light') → current() is 'light'; document has .theme-light. |
-| T4 | toggle() switches dark ↔ light | If current is 'dark', toggle() → 'light'; if 'light', toggle() → 'dark'. |
-| T5 | isDark / isLight computed | When theme is 'dark', isDark() is true; when 'light', isLight() is true. |
+| ID | Description | Assertions |
+|----|-------------|------------|
+| T1 | Initial theme from localStorage | `localStorage` has `music-player-theme` = 'light' -> `current()` is 'light'. |
+| T2 | Initial theme from `prefers-color-scheme` | No stored theme, `matchMedia('(prefers-color-scheme: light)')` matches -> 'light'. |
+| T3 | `setTheme(theme)` updates signal and persists | `setTheme('light')` -> `current()` is 'light'; localStorage has 'light'. |
+| T4 | `toggle()` switches dark <-> light | 'dark' -> toggle() -> 'light'; again -> 'dark'. |
+| T5 | `isDark` / `isLight` computed | 'dark' -> `isDark()` true, `isLight()` false; 'light' -> reversed. |
 
 ### 3.2 AudiusApiService
 
-| ID | Description | Steps / Assertions |
-|----|-------------|--------------------|
-| A1 | searchTracks with empty query returns empty array | searchTracks('') or searchTracks('  ') → of([]), no HTTP request. |
-| A2 | searchTracks sends GET with correct params | searchTracks('test', 24, 0) → GET .../tracks/search?query=test&limit=24&offset=0&app_name=... |
-| A3 | searchTracks maps response.data to array | Mock response { data: [track1] } → observable emits [track1]. |
-| A4 | searchTracks on error returns empty array | Mock HTTP error → observable emits []. |
-| A5 | getStreamEndpointUrl returns URL with trackId and app_name | getStreamEndpointUrl('id1') contains /tracks/id1/stream and app_name. |
-| A6 | getArtworkUrl returns size or fallback | Artwork with 480x480 → that URL; missing size → fallback 150x150 or ''. |
+| ID | Description | Assertions |
+|----|-------------|------------|
+| A1 | `searchTracks('')` returns `[]`, no HTTP | Observable emits `[]`; no request made. |
+| A1b | `searchTracks('   ')` returns `[]` | Whitespace-only also returns empty. |
+| A2 | `searchTracks('test', 24)` sends correct GET | URL contains `/v1/tracks/search`; params: `query=test`, `limit=24`, `app_name`. |
+| A3 | `searchTracks` maps `response.data` to array | `{ data: [track1] }` -> emits `[track1]`. |
+| A4 | `searchTracks` on HTTP error returns `[]` | Error -> emits `[]`. |
+| A5 | `getStreamEndpointUrl('id1')` returns URL | Contains `/v1/tracks/id1/stream` and `app_name`. |
+| A6 | `getArtworkUrl` returns size or fallback | `480x480` present -> returns it; empty artwork -> returns `''`. |
 
 ### 3.3 PlayerService
 
-| ID | Description | Steps / Assertions |
-|----|-------------|--------------------|
-| P1 | play(track, streamUrl) sets nowPlaying and playing | play(track, url) → nowPlaying() has track and streamUrl, isPlaying() true. |
-| P2 | play(track) without streamUrl does nothing when track has no streamUrl | When track has no streamUrl, play(track) does not set nowPlaying. |
-| P3 | playQueue(songs, index) sets queue and plays song at index | playQueue([a,b,c], 1) → queueList() length 3, nowPlaying().track === b. |
-| P4 | playQueue with empty array does nothing | playQueue([]) → no change to nowPlaying. |
-| P5 | togglePlayPause flips isPlaying | After play(), togglePlayPause() → isPlaying() false; again → true. |
-| P6 | setPlaying(value) updates isPlaying | setPlaying(false) → isPlaying() false. |
-| P7 | next() advances to next in queue | Queue [a,b,c], now a → next() → nowPlaying().track === b. |
-| P8 | next() at end of queue wraps to start | Queue [a,b,c], now c → next() → nowPlaying().track === a. |
-| P9 | previous() goes to previous item in queue | Queue [a,b], now b → previous() → nowPlaying().track === a. |
-| P9b | previous() from middle goes to previous index | Queue [a,b,c], now c → previous() → nowPlaying().track === b. |
-| P10b | previous() at start of queue wraps to end | Queue [a,b,c], now a → previous() → nowPlaying().track === c. |
-| P10 | registerPlaybackTrigger stores callback | registerPlaybackTrigger(fn); play(track, url) → fn called with (url, track.id). |
+| ID | Description | Assertions |
+|----|-------------|------------|
+| P1 | `play(track, streamUrl)` sets nowPlaying and playing | `nowPlaying()` has track and streamUrl; `isPlaying()` true. |
+| P2 | `play(track)` without any streamUrl does nothing | `nowPlaying()` remains null. |
+| P3 | `playQueue(songs, index)` sets queue and plays at index | `queueList().length` is 3; `nowPlaying().track` is songs[1]. |
+| P4 | `playQueue([])` does nothing | Previous `nowPlaying` unchanged. |
+| P5 | `togglePlayPause()` flips `isPlaying` | true -> false -> true. |
+| P6 | `setPlaying(false)` updates `isPlaying` | `isPlaying()` becomes false. |
+| P7 | `next()` advances to next in queue | a -> `next()` -> b -> `next()` -> c. |
+| P8 | `next()` at end of queue stops when `loop='off'` | Now c, `next()` -> stays c, `isPlaying()` false. |
+| P8b | `next()` at end wraps when `loop='all'` | Now c, loop all, `next()` -> a. |
+| P8c | `handleEnded()` repeats current when `loop='one'` | Now b, loop one, `handleEnded()` -> still b, `isPlaying()` true. |
+| P9 | `previous()` goes to previous in queue | b -> `previous()` -> a. |
+| P9b | `previous()` from last goes to previous index | c -> `previous()` -> b. |
+| P10b | `previous()` at start wraps to end | a -> `previous()` -> c. |
+| P11 | `toggleShuffle()` flips `shuffleEnabled` | false -> true. |
+| P12 | `cycleLoopMode()` cycles off -> all -> one -> off | Asserts all 4 transitions. |
+| P10 | `registerPlaybackTrigger` callback called on play | `play(track, url)` -> trigger called with `(url, track.id)`. |
 
 ### 3.4 AppComponent
 
-| ID | Description | Steps / Assertions |
-|----|-------------|--------------------|
-| R1 | Renders theme toggle in top right | Template contains .theme-toggle-top button. |
-| R2 | Theme toggle calls theme.toggle() | Click theme toggle → theme.toggle() called (spy). |
-| R3 | Router outlet present | Template contains router-outlet. |
-| R4 | Keyboard Space toggles play/pause | When nowPlaying() is set, document keydown Space → player.togglePlayPause() called. |
-| R5 | Keyboard ArrowRight calls next | When nowPlaying() is set, keydown ArrowRight → player.next() called. |
-| R6 | Keyboard ArrowLeft calls previous | When nowPlaying() is set, keydown ArrowLeft → player.previous() called. |
-| R7 | Keyboard ignored when nothing playing | When nowPlaying() is null, keydown Space → player.togglePlayPause() not called. |
+| ID | Description | Assertions |
+|----|-------------|------------|
+| R1 | Renders theme toggle in top right | `.theme-toggle-top` element exists. |
+| R2 | Theme toggle calls `theme.toggle()` | Click button -> spy called. |
+| R3 | Router outlet present | `router-outlet` element exists. |
+| R4 | Keyboard Space toggles play/pause | `nowPlaying` set, keydown Space -> `togglePlayPause()` called. |
+| R5 | Keyboard ArrowRight calls next | `nowPlaying` set, keydown ArrowRight -> `next()` called. |
+| R6 | Keyboard ArrowLeft calls previous | `nowPlaying` set, keydown ArrowLeft -> `previous()` called. |
+| R6b | Keyboard ArrowRight works on focused range input | Range input focused, keydown ArrowRight -> `next()` still called. |
+| R7 | Keyboard ignored when nothing playing | `nowPlaying` null, keydown Space -> `togglePlayPause()` not called. |
 
 ### 3.5 FreeMusicComponent
 
-| ID | Description | Steps / Assertions |
-|----|-------------|--------------------|
-| F1 | Initial state: empty query, no tracks, no error | query() '', tracks() [], error() ''. |
-| F2 | onSearch with empty query does nothing | onSearch() with query '' → audius.searchTracks not called. |
-| F3 | onSearch with query calls audius.searchTracks | set query 'test', onSearch() → searchTracks('test', 24, 0) called. |
-| F4 | onSearch success sets tracks and clears loading | Mock searchTracks success → tracks() has data, loading() false. |
-| F5 | onSearch error sets error message and clears loading | Mock searchTracks error → error() 'Search failed...', loading() false. |
-| F6 | runRecentSearch(term) sets query and triggers search | runRecentSearch('jazz') → query() 'jazz', searchTracks called. |
-| F7 | play(track) calls player.playQueue with playables and index | play(track) with tracks [a,b,c], track b → playQueue([...], 1) called. |
-| F8 | formatDuration(seconds) returns M:SS | formatDuration(90) → '1:30'; formatDuration(5) → '0:05'. |
-| F9 | ngOnInit loads recent searches from localStorage | localStorage has key free-music-recent-searches → recentSearches() populated (max 5). |
-| F10 | onTrackClick: same track toggles play/pause | When nowPlaying.track.id === track.id, onTrackClick(track) → player.togglePlayPause(). |
-| F11 | onTrackClick: different track calls play | When nowPlaying is other track, onTrackClick(track) → play(track) (playQueue). |
-| F12 | Pagination: onSearch resets page to 1 | onSearch() → page() is 1, loadPage(1) with offset 0. |
-| F13 | Pagination: goToNextPage loads next offset | After search, goToNextPage() → searchTracks(q, 24, 24). |
-| F14 | onCoverError adds track id to brokenCoverIds | onCoverError('id1') → brokenCoverIds().has('id1') is true. |
-| F15 | openAddToPlaylist toggles dropdown for track | openAddToPlaylist(id, e) toggles addToPlaylistTrackId; e.stopPropagation called. |
-| F16 | addTrackToPlaylist calls service and closes dropdown | addTrackToPlaylist(playlistId, trackId) → playlistService.addTrack called; addToPlaylistTrackId set to null. |
-| F17 | State restore from FreeMusicStateService on init | When state has query or tracks, ngOnInit restores query, tracks, page, hasNextPage, brokenCoverIds. |
-| F18 | goToPrevPage decrements page and loads previous offset | After page 2, goToPrevPage() → page() 1, searchTracks(q, 24, 0) called. |
-| F19 | createPlaylistAndAddTrack: modal submit creates playlist, adds track, navigates | When openPrompt resolves with name → create + addTrack called, navigate to /playlists/:id. |
-| F19b | createPlaylistAndAddTrack: modal cancel does nothing | When openPrompt resolves with null → create, addTrack, navigate not called. |
-| F20 | Document click closes add-to-playlist dropdown | onDocumentClick() (or document click) → addToPlaylistTrackId set to null. |
+| ID | Description | Assertions |
+|----|-------------|------------|
+| F1 | Initial state: empty query, no tracks, no error | `query()` `''`, `tracks()` `[]`, `error()` `''`. |
+| F2 | `onSearch()` with empty query does nothing | `searchTracks` not called. |
+| F3 | `onSearch()` with query calls `searchTracks` | `searchTracks('test', 24, 0)` called. |
+| F4 | `onSearch()` success sets tracks, clears loading | `tracks()` has data, `loading()` false. |
+| F5 | `onSearch()` error sets error message, clears loading | `error()` contains 'Search failed', `loading()` false. |
+| F6 | `runRecentSearch(term)` sets query and triggers search | `query()` is 'jazz', `searchTracks('jazz', 24, 0)` called. |
+| F7 | `play(track)` calls `player.playQueue` with playables and index | `playQueue` called with correct playable list and index. |
+| F8 | `formatDuration(seconds)` returns M:SS | `90` -> `'1:30'`; `5` -> `'0:05'`. |
+| F9 | `ngOnInit` loads recent searches from localStorage | Stored `['a','b']` -> `recentSearches()` is `['a','b']`. |
+| F10 | `onTrackClick`: same track toggles play/pause | `togglePlayPause()` called; `playQueue` not called. |
+| F11 | `onTrackClick`: different track calls play | `playQueue` called. |
+| F12 | `onSearch()` resets page to 1 | `page()` is 1; offset 0. |
+| F13 | `goToNextPage()` loads next offset | Page 2; `searchTracks('test', 24, 24)` called. |
+| F14 | `onCoverError('id1')` adds to brokenCoverIds | `brokenCoverIds().has('id1')` is true. |
+| F15 | `openAddToPlaylist` toggles dropdown | Opens for track id; toggles back to null. `stopPropagation` called. |
+| F16 | `addTrackToPlaylist` calls service, closes dropdown | `addTrack` called; `addToPlaylistTrackId()` null. |
+| F17 | State restore from `FreeMusicStateService` on init | Saved query/tracks/page/hasNextPage/brokenCoverIds all restored. |
+| F18 | `goToPrevPage()` decrements page, loads previous offset | Page 1; `searchTracks('test', 24, 0)` called. |
+| F19 | `createPlaylistAndAddTrack`: modal submit | `create` + `addTrack` called; navigates to `/playlists/:id`; dropdown closed. |
+| F19b | `createPlaylistAndAddTrack`: modal cancel | `create`, `addTrack`, `navigate` not called. |
+| F20 | `onDocumentClick()` closes dropdown | `addToPlaylistTrackId()` set to null. |
 
 ### 3.6 PlayerBarComponent
 
-| ID | Description | Steps / Assertions |
-|----|-------------|--------------------|
-| B1 | formatDuration(seconds) returns M:SS | formatDuration(65) → '1:05'; formatDuration(0) → '0:00'. |
-| B2 | formatDuration invalid returns 0:00 | formatDuration(NaN) or negative → '0:00'. |
-| B3 | coverUrl with coverArtUrl returns it | coverUrl({ coverArtUrl: 'https://...' }) → 'https://...'. |
-| B4 | coverUrl with no coverArtUrl returns empty string | coverUrl({}) → ''. |
-| B5 | Component uses PlayerService | Constructor injects PlayerService; template shows nowPlaying when set. |
-| B6 | toggleQueue toggles showQueue | toggleQueue() → showQueue flips; again → back. |
-| B7 | playFromQueue: current track toggles play/pause | When track at index is nowPlaying, playFromQueue(index) → player.togglePlayPause(). |
-| B8 | playFromQueue: other track plays that track | When track at index is not nowPlaying, playFromQueue(index) → player.play(track). |
-| B9 | isCurrentTrack returns true/false | isCurrentTrack(nowPlaying.track.id) true; isCurrentTrack('other') false. |
-| B10 | onQueueCoverError adds track id to queueCoverErrors | onQueueCoverError('id1') → queueCoverErrors().has('id1') is true. |
+| ID | Description | Assertions |
+|----|-------------|------------|
+| B1 | `formatDuration(65)` returns `'1:05'` | Also `formatDuration(0)` -> `'0:00'`. |
+| B2 | `formatDuration(NaN)` or negative returns `'0:00'` | Invalid inputs handled. |
+| B3 | `coverUrl` with `coverArtUrl` returns it | `{ coverArtUrl: 'https://...' }` -> `'https://...'`. |
+| B4 | `coverUrl` with no `coverArtUrl` returns `''` | `{}` -> `''`. |
+| B5 | Component uses `PlayerService` | `player` property is truthy. |
+| B6 | `toggleQueue()` toggles `showQueue` | false -> true -> false. |
+| B7 | `playFromQueue`: current track toggles play/pause | `togglePlayPause()` called. |
+| B8 | `playFromQueue`: other track plays that track | `play(trackB)` called. |
+| B9 | `isCurrentTrack` returns true/false | Current track id -> true; other -> false. |
+| B10 | `onQueueCoverError('id1')` adds to set | `queueCoverErrors().has('id1')` true. |
+
+### 3.7 PlaylistService 
+| ID | Description | Assertions |
+|----|-------------|------------|
+| PL1 | `loadFromStorage` loads from localStorage | Stored JSON array -> `playlistsList()` populated. |
+| PL2 | `loadFromStorage` handles invalid/missing data | Null or invalid JSON -> `playlistsList()` is `[]`. |
+| PL3 | `create(name)` adds playlist and saves | New playlist in list; `localStorage.setItem` called. |
+| PL4 | `create('')` falls back to `'Playlist'` | Name is `'Playlist'`. |
+| PL5 | `rename(id, name)` updates name | Playlist name changed; saved. |
+| PL6 | `rename` with empty name keeps old name | Name unchanged. |
+| PL7 | `delete(id)` removes playlist | Playlist filtered out; saved. |
+| PL8 | `addTrack` appends trackId if not present | trackId in `trackIds`; saved. |
+| PL9 | `addTrack` does not duplicate | Same trackId -> no duplicate. |
+| PL10 | `removeTrack` removes trackId | trackId no longer in `trackIds`; saved. |
+| PL11 | `getPlaylist(id)` returns correct playlist | Found -> playlist; not found -> undefined. |
+| PL12 | `getPlayableTracks` resolves via API | `forkJoin` of `getTrackById` -> `PlayableTrack[]`. Null tracks skipped. |
+| PL13 | `getPlayableTracks` for empty playlist returns `[]` | No API calls made. |
+
+### 3.8 PlaylistListComponent 
+| ID | Description | Assertions |
+|----|-------------|------------|
+| LL1 | Renders playlist list from service | `playlistsList()` items shown. |
+| LL2 | `createPlaylist` opens prompt, creates, navigates | modal called; `create` called; `navigate` called. |
+| LL3 | `createPlaylist` cancelled does nothing | `create` not called. |
+| LL4 | `play(id)` resolves tracks and calls `playQueue` | `getPlayableTracks` subscribed; `playQueue` called. |
+| LL5 | `play(id)` with empty tracks does nothing | `playQueue` not called. |
+| LL6 | `rename` opens prompt, calls service | `rename` called with new name. |
+| LL7 | `delete` opens confirm, calls service | `delete` called after confirmation. |
+| LL8 | `delete` cancelled does nothing | `delete` not called. |
+| LL9 | `open(id)` navigates to detail | `navigate(['/playlists', id])`. |
+
+### 3.9 PlaylistDetailComponent 
+| ID | Description | Assertions |
+|----|-------------|------------|
+| PD1 | Init with valid id loads playlist and tracks | `playlist()` set; `getTrackById` called for each trackId. |
+| PD2 | Init with missing id redirects to `/playlists` | `navigate` called. |
+| PD3 | Init with unknown playlist id redirects | `navigate` called. |
+| PD4 | `play()` resolves and plays queue | `getPlayableTracks` -> `playQueue`. |
+| PD5 | `removeTrack` removes and updates local state | `removeTrack` called; `tracks()` updated. |
+| PD6 | `rename` opens prompt, updates service and local signal | `rename` called; `playlist().name` updated. |
+| PD7 | `deletePlaylist` confirms, deletes, navigates | `delete` called; `navigate` to `/playlists`. |
+| PD8 | `deletePlaylist` cancelled does nothing | `delete` not called. |
+| PD9 | `back()` navigates to `/playlists` | `navigate` called. |
+
+### 3.10 PlaylistModalService 
+| ID | Description | Assertions |
+|----|-------------|------------|
+| PM1 | `openPrompt` sets `promptConfig`, resolves on `closePrompt` | Config signal set; promise resolves with value. |
+| PM2 | `openPrompt` clears `confirmConfig` | `confirmConfig()` is null. |
+| PM3 | `closePrompt(null)` resolves with null | Promise resolves null. |
+| PM4 | `openConfirm` sets `confirmConfig`, resolves on `closeConfirm` | Config signal set; promise resolves with boolean. |
+| PM5 | `openConfirm` clears `promptConfig` | `promptConfig()` is null. |
+
+### 3.11 PlaylistModalComponent 
+| ID | Description | Assertions |
+|----|-------------|------------|
+| MC1 | Prompt submit calls `closePrompt` with trimmed value | `closePrompt` called. |
+| MC2 | Prompt cancel calls `closePrompt(null)` | `closePrompt(null)` called. |
+| MC3 | Confirm yes calls `closeConfirm(true)` | `closeConfirm(true)` called. |
+| MC4 | Confirm no calls `closeConfirm(false)` | `closeConfirm(false)` called. |
+| MC5 | Backdrop click cancels active modal | Prompt: `closePrompt(null)`; Confirm: `closeConfirm(false)`. |
 
 ---
 
@@ -140,6 +218,4 @@ For a single run (no watch) with headless Chrome:
 npx ng test --no-watch --browsers=ChromeHeadless
 ```
 
-Tests are implemented in `src/app/**/*.spec.ts` (services under `services/`, components under `components/free-music/` and `components/player-bar/`). Each module has a corresponding `.spec.ts` file next to its source.
-
-**Verified:** Run after any change. See §3 for full test case list. Free Music plan: `docs/FREE_MUSIC_PLAN.md`.
+**Current status:** 127 tests, all passing. All modules are tested except `FreeMusicStateService` (trivial signal holder).

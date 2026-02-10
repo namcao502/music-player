@@ -21,6 +21,7 @@
             {{ term }}
           </button>
         }
+        <button type="button" class="recent-clear" (click)="clearRecentSearches()" title="Clear recent searches">Clear</button>
       </div>
     }
   </header>
@@ -36,9 +37,28 @@
     </div>
   } @else if (tracks().length > 0) {
     <section class="section">
-      <h2 class="section-title">Results</h2>
+      <div class="section-header">
+        <h2 class="section-title">Results</h2>
+        <div class="sort-controls">
+          <span class="sort-label">Sort:</span>
+          <div class="sort-dropdown-wrap">
+            <button type="button" class="sort-trigger" (click)="toggleSortDropdown($event)">
+              {{ sortLabel() }}
+              <svg class="sort-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            @if (sortDropdownOpen()) {
+              <div class="sort-dropdown" (click)="$event.stopPropagation()">
+                <button type="button" class="sort-option" [class.active]="sortMode() === 'default'" (click)="selectSortMode('default')">Default</button>
+                <button type="button" class="sort-option" [class.active]="sortMode() === 'duration-asc'" (click)="selectSortMode('duration-asc')">Duration (short first)</button>
+                <button type="button" class="sort-option" [class.active]="sortMode() === 'duration-desc'" (click)="selectSortMode('duration-desc')">Duration (long first)</button>
+                <button type="button" class="sort-option" [class.active]="sortMode() === 'artist'" (click)="selectSortMode('artist')">Artist name</button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
       <div class="grid tracks-grid">
-        @for (track of tracks(); track track.id) {
+        @for (track of sortedTracks(); track track.id) {
           <div class="track-card-wrap">
             <button type="button" class="track-card" (click)="onTrackClick(track)">
               <div class="cover-wrap">
@@ -53,9 +73,25 @@
               </div>
               <span class="name">{{ track.title }}</span>
               @if (track.user?.name) {
-                <span class="artist">{{ track.user?.name }}</span>
+                <a class="artist artist-link" [routerLink]="['/artist', track.user!.id]" (click)="$event.stopPropagation()">{{ track.user?.name }}</a>
               }
               <span class="duration">{{ formatDuration(track.duration) }}</span>
+            </button>
+            <button
+              type="button"
+              class="fav-btn"
+              [class.is-fav]="favoritesService.isFavorite(track.id)"
+              (click)="toggleFavorite(track.id, $event)"
+              [attr.aria-label]="favoritesService.isFavorite(track.id) ? 'Remove from favorites' : 'Add to favorites'"
+              [attr.title]="favoritesService.isFavorite(track.id) ? 'Remove from favorites' : 'Add to favorites'"
+            >
+              <svg class="icon-heart" viewBox="0 0 24 24" aria-hidden="true">
+                @if (favoritesService.isFavorite(track.id)) {
+                  <path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                } @else {
+                  <path fill="none" stroke="currentColor" stroke-width="2" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                }
+              </svg>
             </button>
             <button
               type="button"

@@ -97,6 +97,47 @@ export class PlaylistDetailComponent implements OnInit {
     this.router.navigate(['/playlists']);
   }
 
+  moveTrackUp(index: number): void {
+    if (index <= 0) return;
+    const p = this.playlist();
+    if (!p) return;
+    this.playlistService.moveTrack(p.id, index, index - 1);
+    this.playlist.set(this.playlistService.getPlaylist(p.id) ?? null);
+    this.tracks.update((list) => {
+      const arr = [...list];
+      [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+      return arr;
+    });
+  }
+
+  moveTrackDown(index: number): void {
+    const p = this.playlist();
+    if (!p) return;
+    const list = this.tracks();
+    if (index >= list.length - 1) return;
+    this.playlistService.moveTrack(p.id, index, index + 1);
+    this.playlist.set(this.playlistService.getPlaylist(p.id) ?? null);
+    this.tracks.update((arr) => {
+      const copy = [...arr];
+      [copy[index], copy[index + 1]] = [copy[index + 1], copy[index]];
+      return copy;
+    });
+  }
+
+  exportPlaylist(): void {
+    const p = this.playlist();
+    if (!p) return;
+    const json = this.playlistService.exportPlaylist(p.id);
+    if (!json) return;
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${p.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   back(): void {
     this.router.navigate(['/playlists']);
   }

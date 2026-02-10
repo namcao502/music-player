@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
@@ -12,6 +12,8 @@ import { PlayerService } from '../../services/player.service';
   styleUrl: './playlist-list.component.scss'
 })
 export class PlaylistListComponent {
+  importError = signal('');
+
   constructor(
     public playlistService: PlaylistService,
     private player: PlayerService,
@@ -46,5 +48,28 @@ export class PlaylistListComponent {
 
   open(id: string): void {
     this.router.navigate(['/playlists', id]);
+  }
+
+  importPlaylist(): void {
+    this.importError.set('');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const json = reader.result as string;
+        const id = this.playlistService.importPlaylist(json);
+        if (id) {
+          this.router.navigate(['/playlists', id]);
+        } else {
+          this.importError.set('Invalid playlist file.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   }
 }

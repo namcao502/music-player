@@ -81,6 +81,22 @@
     margin-right: 0.25rem;
   }
 
+  .recent-clear {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 500px;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--error);
+    }
+  }
+
   .recent-chip {
     padding: 0.4rem 0.75rem;
     font-size: 0.875rem;
@@ -128,11 +144,98 @@
   to { transform: rotate(360deg); }
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 .section-title {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.04em;
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sort-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.sort-dropdown-wrap {
+  position: relative;
+}
+
+.sort-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 500px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+
+  &:hover {
+    border-color: var(--text-muted);
+  }
+
+  .sort-chevron {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+  }
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  min-width: 200px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 10;
+  padding: 0.35rem 0;
+  overflow: hidden;
+}
+
+.sort-option {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+
+  &.active {
+    color: var(--spotify-green);
+    font-weight: 600;
+  }
 }
 
 /* Fixed card width so every track artwork is the same size. */
@@ -150,6 +253,41 @@ $track-cover-size: 160px;
   position: relative;
   min-width: 0;
   overflow: visible; /* allow dropdown to show outside card */
+}
+
+.fav-btn {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  opacity: 0.9;
+  z-index: 1;
+  transition: color 0.2s, opacity 0.2s, transform 0.15s;
+
+  .icon-heart {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    opacity: 1;
+    color: var(--error);
+  }
+
+  &.is-fav {
+    color: var(--error);
+    opacity: 1;
+  }
 }
 
 .add-to-playlist-btn {
@@ -353,6 +491,16 @@ $track-cover-size: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    &.artist-link {
+      text-decoration: none;
+      cursor: pointer;
+
+      &:hover {
+        color: var(--text-primary);
+        text-decoration: underline;
+      }
+    }
   }
 
   .duration {
@@ -417,4 +565,49 @@ $track-cover-size: 160px;
   color: var(--text-muted);
   margin: 0;
   font-size: 0.95rem;
+}
+
+/* Responsive: mobile */
+@media (max-width: 640px) {
+  .free-music {
+    padding: 1rem;
+  }
+
+  .header {
+    .search-row {
+      max-width: 100%;
+    }
+
+    .recent-searches {
+      max-width: 100%;
+    }
+  }
+
+  .tracks-grid {
+    grid-template-columns: repeat(auto-fill, 120px);
+    gap: 0.75rem;
+  }
+
+  .track-card .cover-wrap {
+    width: 120px;
+    height: 120px;
+  }
+
+  .fav-btn,
+  .add-to-playlist-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .add-to-playlist-dropdown {
+    left: 0;
+    right: auto;
+    margin-left: 0;
+    min-width: 180px;
+
+    &.dropdown-open-left {
+      left: auto;
+      right: 0;
+    }
+  }
 }

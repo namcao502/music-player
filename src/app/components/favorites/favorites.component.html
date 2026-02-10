@@ -1,0 +1,51 @@
+<div class="favorites-page">
+  <header class="header">
+    <h1>Favorites</h1>
+    <p class="subtitle">Your liked tracks</p>
+    @if (tracks().length > 0) {
+      <button type="button" class="btn-play" (click)="playAll()">Play all</button>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading favorites…</p>
+    </div>
+  } @else if (tracks().length === 0) {
+    <p class="empty">No favorites yet. Tap the heart icon on any track to add it here.</p>
+  } @else {
+    <ul class="track-list">
+      @for (track of tracks(); track track.id; let i = $index) {
+        <li class="track-item" (click)="onTrackClick(track)" role="button" tabindex="0" (keydown.enter)="onTrackClick(track)">
+          <span class="track-index">{{ i + 1 }}</span>
+          <div class="track-cover">
+            @if (brokenCoverIds().has(track.id)) {
+              <span class="cover-fallback">♪</span>
+            } @else {
+              <img [src]="artworkUrl(track)" alt="" (error)="onCoverError(track.id)" />
+            }
+          </div>
+          <div class="track-info">
+            <span class="track-title">{{ track.title }}</span>
+            @if (track.user?.name) {
+              <span class="track-artist">{{ track.user?.name }}</span>
+            }
+          </div>
+          <span class="track-duration">{{ formatDuration(track.duration) }}</span>
+          <button
+            type="button"
+            class="remove-btn"
+            (click)="removeFavorite(track.id, $event)"
+            aria-label="Remove from favorites"
+            title="Remove from favorites"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-heart">
+              <path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

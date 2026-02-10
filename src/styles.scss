@@ -130,3 +130,10 @@ input:focus-visible {
   outline: 2px solid var(--spotify-green);
   outline-offset: 2px;
 }
+
+/* Responsive: mobile player bar */
+@media (max-width: 640px) {
+  .theme-dark, .theme-light {
+    --player-bar-height: 72px;
+  }
+}

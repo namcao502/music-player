@@ -30,6 +30,7 @@ export class PlayerService {
   private playing = signal(false);
   private shuffle = signal(false);
   private loop = signal<LoopMode>('off');
+  private crossfade = signal(0);
   private playbackTrigger: PlaybackTrigger | null = null;
 
   nowPlaying = this.current.asReadonly();
@@ -37,8 +38,25 @@ export class PlayerService {
   isPlaying = this.playing.asReadonly();
   shuffleEnabled = this.shuffle.asReadonly();
   loopMode = this.loop.asReadonly();
+  /** Crossfade duration in seconds (0 = off). */
+  crossfadeDuration = this.crossfade.asReadonly();
 
-  constructor() {}
+  constructor() {
+    this.loadCrossfade();
+  }
+
+  private loadCrossfade(): void {
+    try {
+      const val = localStorage.getItem('crossfade-duration');
+      if (val) this.crossfade.set(Number(val) || 0);
+    } catch { /* ignore */ }
+  }
+
+  setCrossfadeDuration(seconds: number): void {
+    const clamped = Math.max(0, Math.min(12, Math.round(seconds)));
+    this.crossfade.set(clamped);
+    try { localStorage.setItem('crossfade-duration', String(clamped)); } catch { /* ignore */ }
+  }
 
   /** Register a function to start playback (set src, load, play) in the same tick as play(). */
   registerPlaybackTrigger(fn: PlaybackTrigger): void {

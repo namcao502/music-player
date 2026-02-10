@@ -76,6 +76,39 @@ export class PlaylistService {
     this.saveToStorage();
   }
 
+  moveTrack(playlistId: string, fromIndex: number, toIndex: number): void {
+    const list = this.playlists().map((p) => {
+      if (p.id !== playlistId) return p;
+      const ids = [...p.trackIds];
+      if (fromIndex < 0 || fromIndex >= ids.length || toIndex < 0 || toIndex >= ids.length) return p;
+      const [item] = ids.splice(fromIndex, 1);
+      ids.splice(toIndex, 0, item);
+      return { ...p, trackIds: ids };
+    });
+    this.playlists.set(list);
+    this.saveToStorage();
+  }
+
+  exportPlaylist(id: string): string | null {
+    const p = this.getPlaylist(id);
+    if (!p) return null;
+    return JSON.stringify(p, null, 2);
+  }
+
+  importPlaylist(json: string): string | null {
+    try {
+      const data = JSON.parse(json);
+      if (!data || !data.name || !Array.isArray(data.trackIds)) return null;
+      const id = 'pl-' + Date.now();
+      const imported = { id, name: String(data.name), trackIds: data.trackIds.map(String) };
+      this.playlists.update((list) => [...list, imported]);
+      this.saveToStorage();
+      return id;
+    } catch {
+      return null;
+    }
+  }
+
   getPlaylist(id: string): Playlist | undefined {
     return this.playlists().find((p) => p.id === id);
   }

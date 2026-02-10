@@ -61,6 +61,38 @@ export class AudiusApiService {
     );
   }
 
+  getTrendingTracks(limit = 20, offset = 0): Observable<AudiusTrack[]> {
+    const params = new HttpParams()
+      .set('limit', String(limit))
+      .set('offset', String(offset))
+      .set('app_name', AUDIUS_APP_NAME);
+    return this.http.get<{ data?: AudiusTrack[] }>(`${environment.audiusApiUrl}/v1/tracks/trending`, { params }).pipe(
+      map((res) => res.data ?? []),
+      catchError(() => of([]))
+    );
+  }
+
+  getUserTracks(userId: string, limit = 20, offset = 0): Observable<AudiusTrack[]> {
+    if (!userId?.trim()) return of([]);
+    const params = new HttpParams()
+      .set('limit', String(limit))
+      .set('offset', String(offset))
+      .set('app_name', AUDIUS_APP_NAME);
+    return this.http.get<{ data?: AudiusTrack[] }>(`${environment.audiusApiUrl}/v1/users/${userId}/tracks`, { params }).pipe(
+      map((res) => res.data ?? []),
+      catchError(() => of([]))
+    );
+  }
+
+  getUserById(userId: string): Observable<{ id: string; name: string; handle: string } | null> {
+    if (!userId?.trim()) return of(null);
+    const params = new HttpParams().set('app_name', AUDIUS_APP_NAME);
+    return this.http.get<{ data?: { id: string; name: string; handle: string } }>(`${environment.audiusApiUrl}/v1/users/${userId}`, { params }).pipe(
+      map((res) => res.data ?? null),
+      catchError(() => of(null))
+    );
+  }
+
   /** Best available artwork URL for a track. */
   getArtworkUrl(track: AudiusTrack, size: keyof NonNullable<AudiusTrack['artwork']> = '480x480'): string {
     const art = track.artwork;

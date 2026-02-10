@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   effect,
+  computed,
   HostListener,
   viewChild,
   signal,
@@ -31,6 +32,10 @@ export class PlayerBarComponent implements OnDestroy {
   private trackJustSetByTrigger: string | null = null;
   /** Cleanup for the one-time "retry play on next user gesture" listener. */
   private retryPlayCleanup: (() => void) | null = null;
+  /** Active crossfade interval id (null when not crossfading). */
+  private crossfadeInterval: ReturnType<typeof setInterval> | null = null;
+  /** True while a crossfade is in progress (prevents re-triggering). */
+  private crossfading = false;
 
   currentTime = signal(0);
   duration = signal(0);
@@ -43,6 +48,12 @@ export class PlayerBarComponent implements OnDestroy {
   queueCoverErrors = signal<Set<string>>(new Set());
   /** Track id for which queue "Add to playlist" dropdown is open. */
   queueAddToPlaylistTrackId = signal<string | null>(null);
+  /** Volume level 0–1. */
+  volume = signal(1);
+  /** Total queue duration in seconds. */
+  totalQueueDuration = computed(() => {
+    return this.player.queueList().reduce((sum, t) => sum + (t.duration || 0), 0);
+  });
   private timeupdateBound = (): void => this.onTimeUpdate();
   private playBound = (): void => {
     if (Date.now() < this.suppressAudioEventsUntil) return;
@@ -78,6 +89,7 @@ export class PlayerBarComponent implements OnDestroy {
       const el = this.audioRef()?.nativeElement;
       if (el) {
         this.player.registerPlaybackTrigger((url: string, trackId: string) => {
+          this.clearCrossfade();
           this.loadedTrackId = trackId;
           this.trackJustSetByTrigger = trackId;
           this.suppressAudioEventsUntil = Date.now() + 1500;
@@ -132,6 +144,7 @@ export class PlayerBarComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.retryPlayCleanup?.();
     this.retryPlayCleanup = null;
+    this.clearCrossfade();
     if (this.attachedEl) this.detachAudioListeners(this.attachedEl);
     this.attachedEl = null;
   }
@@ -164,7 +177,43 @@ export class PlayerBarComponent implements OnDestroy {
   private onTimeUpdate(): void {
     if (this.isSeeking()) return;
     const el = this.audioRef()?.nativeElement;
-    if (el && !isNaN(el.currentTime)) this.currentTime.set(Math.floor(el.currentTime));
+    if (!el || isNaN(el.currentTime)) return;
+    this.currentTime.set(Math.floor(el.currentTime));
+    this.checkCrossfade(el);
+  }
+
+  /** If crossfade is enabled and track is near its end, start fading out. */
+  private checkCrossfade(el: HTMLAudioElement): void {
+    const cf = this.player.crossfadeDuration();
+    if (cf <= 0 || this.crossfading) return;
+    const d = el.duration;
+    if (!isFinite(d) || d <= 0) return;
+    const remaining = d - el.currentTime;
+    if (remaining > cf || remaining <= 0) return;
+    // Start crossfade: gradually reduce volume then advance
+    this.crossfading = true;
+    const userVol = this.volume();
+    const steps = Math.max(1, cf * 10); // 10 updates per second
+    const stepMs = (cf * 1000) / steps;
+    let step = 0;
+    this.crossfadeInterval = setInterval(() => {
+      step++;
+      const ratio = 1 - step / steps;
+      el.volume = Math.max(0, userVol * ratio);
+      if (step >= steps) {
+        this.clearCrossfade();
+        el.volume = userVol;
+        this.player.handleEnded();
+      }
+    }, stepMs);
+  }
+
+  private clearCrossfade(): void {
+    if (this.crossfadeInterval) {
+      clearInterval(this.crossfadeInterval);
+      this.crossfadeInterval = null;
+    }
+    this.crossfading = false;
   }
 
   /** Start playback now and again when the element is ready (helps streams that need to buffer). */
@@ -295,6 +344,20 @@ export class PlayerBarComponent implements OnDestroy {
 
   closeQueueAddToPlaylist(): void {
     this.queueAddToPlaylistTrackId.set(null);
+  }
+
+  onClearQueue(): void {
+    const el = this.audioRef()?.nativeElement;
+    if (el) el.pause();
+    this.clearCrossfade();
+    this.player.clearQueue();
+    this.player.stop();
+  }
+
+  onVolumeInput(value: number): void {
+    this.volume.set(value);
+    const el = this.audioRef()?.nativeElement;
+    if (el) el.volume = value;
   }
 
   @HostListener('document:click')

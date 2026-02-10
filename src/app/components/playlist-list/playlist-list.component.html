@@ -2,7 +2,13 @@
   <header class="header">
     <h1>Playlists</h1>
     <p class="subtitle">Create playlists and add tracks from Free Music.</p>
-    <button type="button" class="btn-primary" (click)="createPlaylist()">New playlist</button>
+    <div class="header-actions">
+      <button type="button" class="btn-primary" (click)="createPlaylist()">New playlist</button>
+      <button type="button" class="btn-secondary" (click)="importPlaylist()">Import</button>
+    </div>
+    @if (importError()) {
+      <p class="import-error">{{ importError() }}</p>
+    }
   </header>
 
   @if (playlistService.playlistsList().length === 0) {

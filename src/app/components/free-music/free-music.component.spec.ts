@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { FreeMusicComponent } from './free-music.component';
 import { AudiusApiService } from '../../services/audius-api.service';
@@ -14,7 +14,7 @@ describe('FreeMusicComponent', () => {
   let playerSpy: jasmine.SpyObj<PlayerService>;
   let playlistServiceSpy: jasmine.SpyObj<PlaylistService>;
   let playlistModalSpy: jasmine.SpyObj<PlaylistModalService>;
-  let routerSpy: jasmine.SpyObj<Router>;
+  let router: Router;
 
   const mockTrack: AudiusTrack = {
     id: '1',
@@ -33,17 +33,18 @@ describe('FreeMusicComponent', () => {
     playlistServiceSpy = jasmine.createSpyObj('PlaylistService', ['addTrack', 'create'], { playlistsList: () => [] });
     playlistServiceSpy.create.and.returnValue('pl-1');
     playlistModalSpy = jasmine.createSpyObj('PlaylistModalService', ['openPrompt']);
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     await TestBed.configureTestingModule({
       imports: [FreeMusicComponent],
       providers: [
+        provideRouter([]),
         { provide: AudiusApiService, useValue: audiusSpy },
         { provide: PlayerService, useValue: playerSpy },
         { provide: PlaylistService, useValue: playlistServiceSpy },
-        { provide: PlaylistModalService, useValue: playlistModalSpy },
-        { provide: Router, useValue: routerSpy }
+        { provide: PlaylistModalService, useValue: playlistModalSpy }
       ]
     }).compileComponents();
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
     // Reset persisted state so each test starts clean
     const state = TestBed.inject(FreeMusicStateService);
     state.query.set('');
@@ -240,7 +241,7 @@ describe('FreeMusicComponent', () => {
     tick();
     expect(playlistServiceSpy.create).toHaveBeenCalledWith('My List');
     expect(playlistServiceSpy.addTrack).toHaveBeenCalledWith('pl-1', 'tid1');
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/playlists', 'pl-1']);
+    expect(router.navigate).toHaveBeenCalledWith(['/playlists', 'pl-1']);
     expect(fixture.componentInstance.addToPlaylistTrackId()).toBeNull();
   }));
 
@@ -251,7 +252,7 @@ describe('FreeMusicComponent', () => {
     tick();
     expect(playlistServiceSpy.create).not.toHaveBeenCalled();
     expect(playlistServiceSpy.addTrack).not.toHaveBeenCalled();
-    expect(routerSpy.navigate).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
   }));
 
   it('F20: onDocumentClick closes add-to-playlist dropdown', () => {

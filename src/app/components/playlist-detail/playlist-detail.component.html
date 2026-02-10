@@ -7,6 +7,7 @@
       <div class="header-actions">
         <button type="button" class="btn-primary" (click)="play()" [disabled]="p.trackIds.length === 0">Play</button>
         <button type="button" class="btn-secondary" (click)="rename()">Rename</button>
+        <button type="button" class="btn-secondary" (click)="exportPlaylist()" [disabled]="p.trackIds.length === 0">Export</button>
         <button type="button" class="btn-secondary danger" (click)="deletePlaylist()">Delete playlist</button>
       </div>
     </header>
@@ -17,8 +18,12 @@
       <p class="empty">No tracks. Add tracks from Free Music.</p>
     } @else {
       <ul class="track-list">
-        @for (track of tracks(); track track.id) {
+        @for (track of tracks(); track track.id; let i = $index) {
           <li class="track-item">
+            <div class="track-reorder">
+              <button type="button" class="btn-move" (click)="moveTrackUp(i)" [disabled]="i === 0" title="Move up" aria-label="Move up">▲</button>
+              <button type="button" class="btn-move" (click)="moveTrackDown(i)" [disabled]="i === tracks().length - 1" title="Move down" aria-label="Move down">▼</button>
+            </div>
             <span class="track-title">{{ track.title }}</span>
             @if (track.user?.name) {
               <span class="track-artist">{{ track.user?.name }}</span>

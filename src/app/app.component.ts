@@ -4,6 +4,7 @@ import { PlayerBarComponent } from './components/player-bar/player-bar.component
 import { PlaylistModalComponent } from './components/playlist-modal/playlist-modal.component';
 import { ThemeService } from './services/theme.service';
 import { PlayerService } from './services/player.service';
+import { HistoryService } from './services/history.service';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +16,8 @@ import { PlayerService } from './services/player.service';
 export class AppComponent {
   constructor(
     public theme: ThemeService,
-    private player: PlayerService
+    private player: PlayerService,
+    _history: HistoryService
   ) {}
 
   /** Allow keyboard control when focus is not on an input (e.g. search box). */

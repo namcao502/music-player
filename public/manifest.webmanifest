@@ -1,0 +1,17 @@
+{
+  "name": "Free Music Player",
+  "short_name": "Music Player",
+  "theme_color": "#1db954",
+  "background_color": "#0f0f0f",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
