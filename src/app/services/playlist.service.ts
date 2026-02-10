@@ -4,6 +4,7 @@ import type { Playlist } from '../models/playlist.model';
 import { PLAYLISTS_STORAGE_KEY } from '../models/playlist.model';
 import { AudiusApiService } from './audius-api.service';
 import type { PlayableTrack } from './player.service';
+import { NotificationService } from './utils/notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class PlaylistService {
@@ -11,7 +12,7 @@ export class PlaylistService {
 
   playlistsList = this.playlists.asReadonly();
 
-  constructor(private audius: AudiusApiService) {
+  constructor(private audius: AudiusApiService, private notification: NotificationService) {
     this.loadFromStorage();
   }
 
@@ -34,8 +35,9 @@ export class PlaylistService {
   private saveToStorage(): void {
     try {
       localStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(this.playlists()));
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error('Failed to save playlists to localStorage:', error);
+      this.notification.error('Failed to save playlists. Storage may be full.');
     }
   }
 
@@ -98,9 +100,15 @@ export class PlaylistService {
   importPlaylist(json: string): string | null {
     try {
       const data = JSON.parse(json);
-      if (!data || !data.name || !Array.isArray(data.trackIds)) return null;
+      // Validate: must be object, not array or primitive
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+      if (!data.name || !Array.isArray(data.trackIds)) return null;
+      // Filter trackIds: only non-empty strings
+      const validIds = data.trackIds
+        .filter((id: unknown) => typeof id === 'string' && id.trim().length > 0)
+        .map((id: string) => id.trim());
       const id = 'pl-' + Date.now();
-      const imported = { id, name: String(data.name), trackIds: data.trackIds.map(String) };
+      const imported = { id, name: String(data.name).trim() || 'Playlist', trackIds: validIds };
       this.playlists.update((list) => [...list, imported]);
       this.saveToStorage();
       return id;

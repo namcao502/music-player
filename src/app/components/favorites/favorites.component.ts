@@ -1,10 +1,12 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FavoritesService } from '../../services/favorites.service';
 import { AudiusApiService } from '../../services/audius-api.service';
-import { PlayerService, type PlayableTrack } from '../../services/player.service';
+import { PlayerService } from '../../services/player.service';
 import type { AudiusTrack } from '../../models/audius.models';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { formatDuration } from '../../services/utils/format.helpers';
+import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
 
 @Component({
   selector: 'app-favorites',
@@ -38,10 +40,16 @@ export class FavoritesComponent implements OnInit {
     const requests = ids.map((id) =>
       this.audius.getTrackById(id).pipe(catchError(() => of(null)))
     );
-    forkJoin(requests).subscribe((results) => {
-      const valid = results.filter((t): t is AudiusTrack => t != null);
-      this.tracks.set(valid);
-      this.loading.set(false);
+    forkJoin(requests).subscribe({
+      next: (results) => {
+        const valid = results.filter((t): t is AudiusTrack => t != null);
+        this.tracks.set(valid);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.tracks.set([]);
+        this.loading.set(false);
+      }
     });
   }
 
@@ -56,14 +64,7 @@ export class FavoritesComponent implements OnInit {
 
   play(track: AudiusTrack): void {
     const list = this.tracks();
-    const playables: PlayableTrack[] = list.map((t) => ({
-      id: t.id,
-      title: t.title,
-      artist: t.user?.name,
-      duration: t.duration,
-      coverArtUrl: this.audius.getArtworkUrl(t),
-      streamUrl: this.audius.getStreamEndpointUrl(t.id)
-    }));
+    const playables = buildPlayableQueue(this.audius, list);
     const index = list.findIndex((t) => t.id === track.id);
     this.player.playQueue(playables, index >= 0 ? index : 0);
   }
@@ -85,13 +86,8 @@ export class FavoritesComponent implements OnInit {
   }
 
   artworkUrl(track: AudiusTrack): string {
-    return this.audius.getArtworkUrl(track, '480x480') || this.audius.getArtworkUrl(track, '150x150');
+    return getPreferredArtworkUrl(this.audius, track);
   }
 
-  formatDuration(seconds: number): string {
-    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
+  formatDuration = formatDuration;
 }

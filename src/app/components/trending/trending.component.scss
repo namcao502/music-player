@@ -39,6 +39,19 @@
   }
 }
 
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: var(--error);
+
+  .error-message {
+    text-align: center;
+  }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

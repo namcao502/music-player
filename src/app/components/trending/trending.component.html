@@ -9,6 +9,10 @@
       <div class="loading-spinner"></div>
       <p>Loading trending tracks…</p>
     </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <p class="error-message">{{ error() }}</p>
+    </div>
   } @else if (tracks().length > 0) {
     <ul class="track-list">
       @for (track of tracks(); track track.id; let i = $index) {
@@ -18,7 +22,7 @@
             @if (brokenCoverIds().has(track.id)) {
               <span class="cover-fallback">♪</span>
             } @else {
-              <img [src]="artworkUrl(track)" [alt]="" (error)="onCoverError(track.id)" />
+              <img [src]="artworkUrl(track)" [alt]="track.title" (error)="onCoverError(track.id)" />
             }
           </div>
           <div class="track-info">

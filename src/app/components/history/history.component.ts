@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { HistoryService } from '../../services/history.service';
-import { PlayerService } from '../../services/player.service';
+import { HistoryService, type HistoryEntry } from '../../services/history.service';
+import { PlayerService, type PlayableTrack } from '../../services/player.service';
+import { formatDuration } from '../../services/utils/format.helpers';
 
 @Component({
   selector: 'app-history',
@@ -15,22 +16,16 @@ export class HistoryComponent {
     private player: PlayerService
   ) {}
 
-  playTrack(entry: { track: { id: string; title: string; streamUrl?: string }; playedAt: number }): void {
-    const track = entry.track;
-    if (!track.streamUrl) return;
-    this.player.play(track as Parameters<PlayerService['play']>[0]);
+  playTrack(entry: HistoryEntry): void {
+    if (!entry.track.streamUrl) return;
+    this.player.play(entry.track);
   }
 
   clearHistory(): void {
     this.historyService.clearHistory();
   }
 
-  formatDuration(seconds: number): string {
-    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
+  formatDuration = formatDuration;
 
   formatDate(ts: number): string {
     return new Date(ts).toLocaleString();

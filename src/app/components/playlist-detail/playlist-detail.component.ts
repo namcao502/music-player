@@ -6,6 +6,8 @@ import { AudiusApiService } from '../../services/audius-api.service';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
 import { PlayerService } from '../../services/player.service';
+import { formatDuration } from '../../services/utils/format.helpers';
+import { getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
 
 @Component({
   selector: 'app-playlist-detail',
@@ -142,14 +144,9 @@ export class PlaylistDetailComponent implements OnInit {
     this.router.navigate(['/playlists']);
   }
 
-  formatDuration(seconds: number): string {
-    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
+  formatDuration = formatDuration;
 
   artworkUrl(track: AudiusTrack): string {
-    return this.audius.getArtworkUrl(track, '480x480') || this.audius.getArtworkUrl(track, '150x150') || '';
+    return getPreferredArtworkUrl(this.audius, track);
   }
 }

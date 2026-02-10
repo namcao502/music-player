@@ -24,7 +24,7 @@
             @if (brokenCoverIds().has(track.id)) {
               <span class="cover-fallback">♪</span>
             } @else {
-              <img [src]="artworkUrl(track)" [alt]="" (error)="onCoverError(track.id)" />
+              <img [src]="artworkUrl(track)" [alt]="track.title" (error)="onCoverError(track.id)" />
             }
           </div>
           <div class="track-info">

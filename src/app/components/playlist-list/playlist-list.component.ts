@@ -68,6 +68,9 @@ export class PlaylistListComponent {
           this.importError.set('Invalid playlist file.');
         }
       };
+      reader.onerror = () => {
+        this.importError.set('Failed to read file.');
+      };
       reader.readAsText(file);
     };
     input.click();

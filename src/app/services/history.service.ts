@@ -1,5 +1,6 @@
 import { Injectable, signal, effect } from '@angular/core';
 import { PlayerService, type PlayableTrack } from './player.service';
+import { NotificationService } from './utils/notification.service';
 
 export interface HistoryEntry {
   track: PlayableTrack;
@@ -15,10 +16,15 @@ export class HistoryService {
 
   historyList = this.history.asReadonly();
 
-  constructor(private player: PlayerService) {
+  constructor(private player: PlayerService, private notification: NotificationService) {
     effect(() => {
       const np = this.player.nowPlaying();
       if (!np) return;
+      // Skip if this track is already the most recent history entry
+      const current = this.history();
+      if (current.length > 0 && current[0].track.id === np.track.id) {
+        return;
+      }
       this.addEntry(np.track);
     }, { allowSignalWrites: true });
   }
@@ -53,8 +59,9 @@ export class HistoryService {
   private saveToStorage(): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.history()));
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error('Failed to save history to localStorage:', error);
+      this.notification.error('Failed to save history. Storage may be full.');
     }
   }
 }

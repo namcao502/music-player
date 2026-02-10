@@ -1,9 +1,11 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AudiusApiService } from '../../services/audius-api.service';
-import { PlayerService, type PlayableTrack } from '../../services/player.service';
+import { PlayerService } from '../../services/player.service';
 import { FavoritesService } from '../../services/favorites.service';
 import type { AudiusTrack } from '../../models/audius.models';
+import { formatDuration } from '../../services/utils/format.helpers';
+import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
 
 @Component({
   selector: 'app-trending',
@@ -15,6 +17,7 @@ import type { AudiusTrack } from '../../models/audius.models';
 export class TrendingComponent implements OnInit {
   tracks = signal<AudiusTrack[]>([]);
   loading = signal(false);
+  error = signal<string | null>(null);
   brokenCoverIds = signal<Set<string>>(new Set());
 
   constructor(
@@ -29,12 +32,16 @@ export class TrendingComponent implements OnInit {
 
   private loadTrending(): void {
     this.loading.set(true);
+    this.error.set(null);
     this.audius.getTrendingTracks(50).subscribe({
       next: (data) => {
         this.tracks.set(data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => {
+        this.error.set('Failed to load trending tracks. Please try again.');
+        this.loading.set(false);
+      }
     });
   }
 
@@ -49,14 +56,7 @@ export class TrendingComponent implements OnInit {
 
   play(track: AudiusTrack): void {
     const list = this.tracks();
-    const playables: PlayableTrack[] = list.map((t) => ({
-      id: t.id,
-      title: t.title,
-      artist: t.user?.name,
-      duration: t.duration,
-      coverArtUrl: this.audius.getArtworkUrl(t),
-      streamUrl: this.audius.getStreamEndpointUrl(t.id)
-    }));
+    const playables = buildPlayableQueue(this.audius, list);
     const index = list.findIndex((t) => t.id === track.id);
     this.player.playQueue(playables, index >= 0 ? index : 0);
   }
@@ -71,12 +71,8 @@ export class TrendingComponent implements OnInit {
   }
 
   artworkUrl(track: AudiusTrack): string {
-    return this.audius.getArtworkUrl(track, '480x480') || this.audius.getArtworkUrl(track, '150x150');
+    return getPreferredArtworkUrl(this.audius, track);
   }
 
-  formatDuration(seconds: number): string {
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
+  formatDuration = formatDuration;
 }

@@ -8,7 +8,8 @@ import { PlayerService } from '../../services/player.service';
 import { PlaylistService } from '../../services/playlist.service';
 import { FavoritesService } from '../../services/favorites.service';
 import type { AudiusTrack } from '../../models/audius.models';
-import type { PlayableTrack } from '../../services/player.service';
+import { formatDuration } from '../../services/utils/format.helpers';
+import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
 
 const RECENT_SEARCHES_KEY = 'free-music-recent-searches';
 const MAX_RECENT_SEARCHES = 5;
@@ -189,28 +190,16 @@ export class FreeMusicComponent implements OnInit {
   play(track: AudiusTrack): void {
     this.error.set('');
     const list = this.tracks();
-    const playables: PlayableTrack[] = list.map((t) => ({
-      id: t.id,
-      title: t.title,
-      artist: t.user?.name,
-      duration: t.duration,
-      coverArtUrl: this.audius.getArtworkUrl(t),
-      streamUrl: this.audius.getStreamEndpointUrl(t.id)
-    }));
+    const playables = buildPlayableQueue(this.audius, list);
     const index = list.findIndex((t) => t.id === track.id);
-    const startIndex = index >= 0 ? index : 0;
-    this.player.playQueue(playables, startIndex);
+    this.player.playQueue(playables, index >= 0 ? index : 0);
   }
 
   artworkUrl(track: AudiusTrack): string {
-    return this.audius.getArtworkUrl(track, '480x480') || this.audius.getArtworkUrl(track, '150x150');
+    return getPreferredArtworkUrl(this.audius, track);
   }
 
-  formatDuration(seconds: number): string {
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  }
+  formatDuration = formatDuration;
 
   private readonly ADD_TO_PLAYLIST_DROPDOWN_WIDTH = 240;
 
