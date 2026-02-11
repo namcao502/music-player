@@ -6,6 +6,23 @@ import type { AudiusTrack, AudiusSearchResponse, AudiusStreamResponse } from '..
 
 const AUDIUS_APP_NAME = 'angular-music-player';
 
+export const AUDIUS_GENRES: string[] = [
+  'Electronic',
+  'Hip-Hop/Rap',
+  'Pop',
+  'Rock',
+  'R&B/Soul',
+  'Alternative',
+  'Latin',
+  'Dance',
+  'Metal',
+  'Ambient',
+  'Folk',
+  'Jazz',
+  'Classical',
+  'World'
+];
+
 @Injectable({ providedIn: 'root' })
 export class AudiusApiService {
   constructor(private http: HttpClient) {}
@@ -61,11 +78,14 @@ export class AudiusApiService {
     );
   }
 
-  getTrendingTracks(limit = 20, offset = 0): Observable<AudiusTrack[]> {
-    const params = new HttpParams()
+  getTrendingTracks(limit = 20, offset = 0, genre?: string): Observable<AudiusTrack[]> {
+    let params = new HttpParams()
       .set('limit', String(limit))
       .set('offset', String(offset))
       .set('app_name', AUDIUS_APP_NAME);
+    if (genre) {
+      params = params.set('genre', genre);
+    }
     return this.http.get<{ data?: AudiusTrack[] }>(`${environment.audiusApiUrl}/v1/tracks/trending`, { params }).pipe(
       map((res) => res.data ?? []),
       catchError(() => of([]))

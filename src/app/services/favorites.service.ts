@@ -1,5 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { NotificationService } from './utils/notification.service';
+import { TOAST } from '../constants/ui-strings';
 
 const STORAGE_KEY = 'music-player-favorites';
 
@@ -33,7 +34,7 @@ export class FavoritesService {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...this.favorites()]));
     } catch (error) {
       console.error('Failed to save favorites to localStorage:', error);
-      this.notification.error('Failed to save favorites. Storage may be full.');
+      this.notification.error(TOAST.FAVORITES_SAVE_FAILED);
     }
   }
 
@@ -42,6 +43,7 @@ export class FavoritesService {
   }
 
   toggle(trackId: string): void {
+    const wasFavorite = this.favorites().has(trackId);
     this.favorites.update((set) => {
       const next = new Set(set);
       if (next.has(trackId)) {
@@ -52,6 +54,7 @@ export class FavoritesService {
       return next;
     });
     this.saveToStorage();
+    this.notification.success(wasFavorite ? TOAST.REMOVED_FROM_FAVORITES : TOAST.ADDED_TO_FAVORITES);
   }
 
   add(trackId: string): void {
@@ -68,5 +71,6 @@ export class FavoritesService {
       return next;
     });
     this.saveToStorage();
+    this.notification.success(TOAST.REMOVED_FROM_FAVORITES);
   }
 }

@@ -65,6 +65,57 @@
   }
 }
 
+/* F8: Tag Filter Row */
+.tag-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.tag-filter-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tag-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 500px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+  }
+
+  &.active {
+    background: var(--spotify-green);
+    border-color: var(--spotify-green);
+    color: var(--text-on-accent);
+    font-weight: 600;
+  }
+}
+
+.tag-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .empty {
   color: var(--text-muted);
   margin: 0;
@@ -114,6 +165,46 @@
     margin-top: 0.25rem;
   }
 
+  /* F8: Tag Badges */
+  .item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+  }
+
+  .tag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid;
+    border-radius: 500px;
+
+    .tag-remove {
+      width: 14px;
+      height: 14px;
+      padding: 0;
+      font-size: 0.75rem;
+      line-height: 1;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        color: var(--error);
+      }
+    }
+  }
+
   .item-actions {
     display: flex;
     gap: 0.5rem;
@@ -141,6 +232,66 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    &.btn-tag .icon-tag {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+}
+
+/* F8: Tag Menu */
+.tag-menu-wrap {
+  position: relative;
+}
+
+.tag-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  min-width: 160px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 10;
+  padding: 0.35rem 0;
+}
+
+.tag-menu-title {
+  margin: 0;
+  padding: 0.5rem 0.75rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tag-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+
+  .tag-check {
+    margin-left: auto;
+    color: var(--spotify-green);
+    font-weight: 700;
   }
 }
 

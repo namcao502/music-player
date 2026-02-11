@@ -5,6 +5,7 @@ import { PLAYLISTS_STORAGE_KEY } from '../models/playlist.model';
 import { AudiusApiService } from './audius-api.service';
 import type { PlayableTrack } from './player.service';
 import { NotificationService } from './utils/notification.service';
+import { TOAST } from '../constants/ui-strings';
 
 function isPlaylistArray(value: unknown): value is Playlist[] {
   if (!Array.isArray(value)) return false;
@@ -46,15 +47,17 @@ export class PlaylistService {
       localStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(this.playlists()));
     } catch (error) {
       console.error('Failed to save playlists to localStorage:', error);
-      this.notification.error('Failed to save playlists. Storage may be full.');
+      this.notification.error(TOAST.PLAYLIST_SAVE_FAILED);
     }
   }
 
   create(name: string): string {
     const id = 'pl-' + Date.now();
-    const list = [...this.playlists(), { id, name: name.trim() || 'Playlist', trackIds: [] }];
+    const trimmed = name.trim() || 'Playlist';
+    const list = [...this.playlists(), { id, name: trimmed, trackIds: [] }];
     this.playlists.set(list);
     this.saveToStorage();
+    this.notification.success(TOAST.PLAYLIST_CREATED(trimmed));
     return id;
   }
 
@@ -62,27 +65,59 @@ export class PlaylistService {
     const list = this.playlists().map((p) => (p.id === id ? { ...p, name: name.trim() || p.name } : p));
     this.playlists.set(list);
     this.saveToStorage();
+    this.notification.success(TOAST.PLAYLIST_RENAMED);
   }
 
   delete(id: string): void {
-    this.playlists.set(this.playlists().filter((p) => p.id !== id));
+    const p = this.getPlaylist(id);
+    this.playlists.set(this.playlists().filter((pl) => pl.id !== id));
     this.saveToStorage();
+    this.notification.success(p ? TOAST.PLAYLIST_DELETED(p.name) : TOAST.PLAYLIST_DELETED_GENERIC);
   }
 
   addTrack(playlistId: string, trackId: string): void {
+    const playlist = this.getPlaylist(playlistId);
+    if (playlist?.trackIds.includes(trackId)) {
+      this.notification.warning(TOAST.TRACK_ALREADY_IN_PLAYLIST);
+      return;
+    }
     const list = this.playlists().map((p) => {
       if (p.id !== playlistId) return p;
-      if (p.trackIds.includes(trackId)) return p;
       return { ...p, trackIds: [...p.trackIds, trackId] };
     });
     this.playlists.set(list);
     this.saveToStorage();
+    if (playlist) {
+      this.notification.success(TOAST.ADDED_TO_PLAYLIST(playlist.name));
+    }
   }
 
   removeTrack(playlistId: string, trackId: string): void {
     const list = this.playlists().map((p) =>
       p.id === playlistId ? { ...p, trackIds: p.trackIds.filter((tid) => tid !== trackId) } : p
     );
+    this.playlists.set(list);
+    this.saveToStorage();
+    this.notification.success(TOAST.TRACK_REMOVED_FROM_PLAYLIST);
+  }
+
+  // F8: Tag management
+  addTag(playlistId: string, tag: string): void {
+    const list = this.playlists().map((p) => {
+      if (p.id !== playlistId) return p;
+      const tags = p.tags ?? [];
+      if (tags.includes(tag)) return p;
+      return { ...p, tags: [...tags, tag] };
+    });
+    this.playlists.set(list);
+    this.saveToStorage();
+  }
+
+  removeTag(playlistId: string, tag: string): void {
+    const list = this.playlists().map((p) => {
+      if (p.id !== playlistId) return p;
+      return { ...p, tags: (p.tags ?? []).filter((t) => t !== tag) };
+    });
     this.playlists.set(list);
     this.saveToStorage();
   }
@@ -117,11 +152,14 @@ export class PlaylistService {
         .filter((id: unknown) => typeof id === 'string' && id.trim().length > 0)
         .map((id: string) => id.trim());
       const id = 'pl-' + Date.now();
-      const imported = { id, name: String(data.name).trim() || 'Playlist', trackIds: validIds };
+      const importedName = String(data.name).trim() || 'Playlist';
+      const imported = { id, name: importedName, trackIds: validIds };
       this.playlists.update((list) => [...list, imported]);
       this.saveToStorage();
+      this.notification.success(TOAST.PLAYLIST_IMPORTED(importedName));
       return id;
     } catch {
+      this.notification.error(TOAST.PLAYLIST_IMPORT_FAILED);
       return null;
     }
   }

@@ -13,8 +13,8 @@
         autofocus
       />
       <div class="modal-actions">
-        <button type="button" class="modal-btn primary" (click)="onPromptSubmit()">OK</button>
-        <button type="button" class="modal-btn secondary" (click)="onPromptCancel()">Cancel</button>
+        <button type="button" class="modal-btn primary" (click)="onPromptSubmit()">{{ strings.BTN.OK }}</button>
+        <button type="button" class="modal-btn secondary" (click)="onPromptCancel()">{{ strings.BTN.CANCEL }}</button>
       </div>
     </div>
   </div>
@@ -25,7 +25,7 @@
       <p id="modal-confirm-message" class="modal-message">{{ confirmCfg.message }}</p>
       <div class="modal-actions">
         <button type="button" class="modal-btn danger" (click)="onConfirmYes()">{{ confirmCfg.confirmLabel }}</button>
-        <button type="button" class="modal-btn secondary" (click)="onConfirmNo()">Cancel</button>
+        <button type="button" class="modal-btn secondary" (click)="onConfirmNo()">{{ strings.BTN.CANCEL }}</button>
       </div>
     </div>
   </div>

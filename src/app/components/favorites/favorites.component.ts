@@ -8,6 +8,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { formatDuration } from '../../services/utils/format.helpers';
 import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
+import { PAGE, BTN, LOADING, EMPTY, LABEL_FAVORITES } from '../../constants/ui-strings';
 
 @Component({
   selector: 'app-favorites',
@@ -18,6 +19,7 @@ import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FavoritesComponent implements OnInit {
+  readonly strings = { PAGE, BTN, LOADING, EMPTY, LABEL_FAVORITES };
   private destroyRef = inject(DestroyRef);
   tracks = signal<AudiusTrack[]>([]);
   loading = signal(false);

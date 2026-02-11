@@ -9,6 +9,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { formatDuration } from '../../services/utils/format.helpers';
 import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
+import { PAGE, BTN, LOADING, EMPTY, ERROR, LABEL_FAVORITES } from '../../constants/ui-strings';
 
 @Component({
   selector: 'app-artist',
@@ -19,6 +20,7 @@ import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ArtistComponent implements OnInit {
+  readonly strings = { PAGE, BTN, LOADING, EMPTY, LABEL_FAVORITES };
   private destroyRef = inject(DestroyRef);
   artistName = signal('');
   artistHandle = signal('');
@@ -54,14 +56,14 @@ export class ArtistComponent implements OnInit {
           this.artistName.set(result.user.name);
           this.artistHandle.set(result.user.handle);
         } else {
-          this.artistName.set('Unknown Artist');
+          this.artistName.set(ERROR.UNKNOWN_ARTIST);
           this.artistHandle.set('');
         }
         this.tracks.set(result.tracks);
         this.loading.set(false);
       },
       error: () => {
-        this.artistName.set('Unknown Artist');
+        this.artistName.set(ERROR.UNKNOWN_ARTIST);
         this.artistHandle.set('');
         this.tracks.set([]);
         this.loading.set(false);

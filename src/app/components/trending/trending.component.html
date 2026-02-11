@@ -1,13 +1,20 @@
 <div class="trending-page">
   <header class="header">
-    <h1>Trending</h1>
-    <p class="subtitle">Top tracks on Audius right now</p>
+    <h1>{{ strings.PAGE.TRENDING_TITLE }}</h1>
+    <p class="subtitle">{{ strings.PAGE.TRENDING_SUBTITLE }}</p>
   </header>
+
+  <div class="genre-chips">
+    <button type="button" class="genre-chip" [class.active]="selectedGenre() === null" (click)="selectGenre(null)">{{ strings.LABEL.ALL }}</button>
+    @for (genre of genres; track genre) {
+      <button type="button" class="genre-chip" [class.active]="selectedGenre() === genre" (click)="selectGenre(genre)">{{ genre }}</button>
+    }
+  </div>
 
   @if (loading()) {
     <div class="loading-state">
       <div class="loading-spinner"></div>
-      <p>Loading trending tracks…</p>
+      <p>{{ strings.LOADING.TRENDING }}</p>
     </div>
   } @else if (error()) {
     <div class="error-state">
@@ -34,10 +41,19 @@
           <span class="track-duration">{{ formatDuration(track.duration) }}</span>
           <button
             type="button"
+            class="share-btn"
+            (click)="shareTrack(track.id, $event)"
+          [attr.aria-label]="strings.BTN.SHARE_TRACK"
+          [attr.title]="strings.BTN.SHARE_TRACK"
+          >
+            <svg class="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </button>
+          <button
+            type="button"
             class="fav-btn"
             [class.is-fav]="favoritesService.isFavorite(track.id)"
             (click)="toggleFavorite(track.id, $event)"
-            [attr.aria-label]="favoritesService.isFavorite(track.id) ? 'Remove from favorites' : 'Add to favorites'"
+            [attr.aria-label]="favoritesService.isFavorite(track.id) ? strings.LABEL_FAVORITES.REMOVE : strings.LABEL_FAVORITES.ADD"
           >
             <svg class="icon-heart" viewBox="0 0 24 24" aria-hidden="true">
               @if (favoritesService.isFavorite(track.id)) {
@@ -51,6 +67,6 @@
       }
     </ul>
   } @else {
-    <p class="empty">No trending tracks available.</p>
+    <p class="empty">{{ strings.EMPTY.TRENDING }}</p>
   }
 </div>

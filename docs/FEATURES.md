@@ -12,11 +12,13 @@ A browser-based music player built with Angular that streams free, royalty-free 
 - Paginated results (24 tracks per page) with Previous / Next navigation.
 - Recent searches (last 5) saved locally and shown as clickable chips.
 - Clear recent searches with one click.
+- One-click share button on each result to copy a shareable track link.
 
 ### 1.2 Trending Tracks
 
 - Browse the top 50 trending tracks on Audius.
 - Auto-loads on page visit, no search required.
+ - Same quick actions as search results (favorite, share, add to playlist).
 
 ### 1.3 Artist Pages
 
@@ -43,6 +45,7 @@ A browser-based music player built with Angular that streams free, royalty-free 
 - Displays cover art, track title, and artist name.
 - Play / Pause, Previous, Next controls.
 - Seekbar with current time and total duration.
+- Playback speed selector (e.g. 1×, 1.25×, 1.5×, 2×) for fine‑grained control.
 
 ### 2.2 Queue
 
@@ -51,6 +54,7 @@ A browser-based music player built with Angular that streams free, royalty-free 
 - Click any track in the queue to jump to it.
 - Total queue duration displayed at the bottom.
 - Clear queue button to stop playback and reset the queue.
+- Add any queued track to an existing playlist or create a new playlist directly from the queue.
 
 ### 2.3 Shuffle & Loop
 
@@ -64,6 +68,7 @@ A browser-based music player built with Angular that streams free, royalty-free 
 
 - Adjustable volume slider (0–100%).
 - Dynamic speaker icon reflects current volume level (muted / low / high).
+- Dedicated mute / unmute button.
 
 ### 2.5 Crossfade
 
@@ -74,7 +79,20 @@ A browser-based music player built with Angular that streams free, royalty-free 
 
 - Animated equalizer bars on the currently playing track in search results, trending, and queue panel.
 
-### 2.7 Keyboard Shortcuts
+### 2.7 Audio Visualizer
+
+- Optional audio visualizer in the player bar (desktop) driven by the Web Audio API analyser node.
+
+### 2.8 Mini Player
+
+- Compact mini player mode on desktop that keeps core controls visible while collapsing the full bar.
+
+### 2.9 Sleep Timer
+
+- Sleep timer in the queue footer to automatically stop playback after 15, 30, or 60 minutes.
+- Visible countdown and one‑click cancel button while the timer is active.
+
+### 2.10 Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -83,6 +101,8 @@ A browser-based music player built with Angular that streams free, royalty-free 
 | Left Arrow | Previous track |
 
 Shortcuts are disabled when typing in a text input.
+
+Media keys (Play/Pause, Next, Previous) are also supported when available.
 
 ---
 
@@ -93,12 +113,14 @@ Shortcuts are disabled when typing in a text input.
 - Create playlists with custom names.
 - Rename or delete playlists via modal dialogs.
 - View track count per playlist in the list view.
+- Color‑coded tags per playlist with a preset tag palette.
+- Tag filter chips above the list to quickly filter playlists by tag.
 
 ### 3.2 Track Management
 
 - Add tracks to playlists from search results, trending, or the queue panel via the "+" button.
 - Remove tracks from a playlist in the detail view.
-- Reorder tracks with move up/down buttons.
+- Reorder tracks with drag‑and‑drop handles in the playlist detail view.
 
 ### 3.3 Play Playlist
 
@@ -183,6 +205,15 @@ All user data is stored in the browser's `localStorage`:
 | `free-music-recent-searches` | Last 5 search queries |
 | `crossfade-duration` | Crossfade setting (0–12 seconds) |
 
+### Notifications
+
+- Non‑blocking toast notifications for key actions:
+  - Playlist create / rename / delete / import / export.
+  - Add / remove from favorites and playlists.
+  - Clear queue, clear history.
+  - Sleep timer set / ended / cancelled.
+  - Share link copy success / failure.
+
 ### Routes
 
 | Path | Page |
@@ -194,6 +225,10 @@ All user data is stored in the browser's `localStorage`:
 | `/artist/:id` | Artist track list |
 | `/favorites` | Favorite tracks |
 | `/history` | Play history |
+
+### UI Strings
+
+All user-facing text (labels, buttons, empty states, toasts, errors) is centralized in `src/app/constants/ui-strings.ts` for consistency and easier updates or localization.
 
 ### Browser Support
 

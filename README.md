@@ -48,13 +48,14 @@ npm test
 - **Shuffle** and **Loop** (off / loop all / loop one).
 - **Volume control** with dynamic speaker icon.
 - **Crossfade** — smooth fade between tracks (0–12 seconds, configurable in queue panel).
-- **Keyboard shortcuts** — Space (play/pause), Left/Right arrows (previous/next).
+- **Keyboard shortcuts** — Space (play/pause), Left/Right arrows (previous/next); media keys when available.
+- **Playback speed**, **sleep timer**, **share track link**; optional **audio visualizer** and **mini player** (desktop).
 
 ### Playlists
 
-- Create, rename, and delete playlists.
+- Create, rename, and delete playlists; **tags** with filter chips.
 - Add tracks from search results, trending, or the queue panel.
-- Reorder tracks (move up/down) in playlist detail.
+- Reorder tracks with drag-and-drop in playlist detail.
 - **Export** playlists as JSON files; **import** from JSON.
 
 ### Favorites
@@ -106,8 +107,9 @@ src/app/
     playlist-detail/  Single playlist (reorder, export, play)
     favorites/        Favorited tracks list
     history/          Play history with timestamps
-    player-bar/       Now playing, queue panel, crossfade, volume
+    player-bar/       Now playing, queue panel, crossfade, volume, sleep timer
     playlist-modal/   Prompt and confirm dialogs
+    notification-toast/  Toast notifications
   services/
     audius-api        Audius API (search, tracks, streaming, artwork)
     player            Playback state, queue, shuffle, loop, crossfade
@@ -115,8 +117,11 @@ src/app/
     favorites         Favorite track IDs (localStorage)
     history           Play history with auto-recording (localStorage)
     theme             Light/dark theme (localStorage)
+    sleep-timer       Sleep timer (in-memory)
     free-music-state  In-memory search state persistence
     playlist-modal    Modal dialog state
+  constants/
+    ui-strings        Centralized user-facing text
   models/
     audius.models     Audius API response types
     playlist.model    Playlist interface

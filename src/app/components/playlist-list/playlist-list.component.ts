@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, inject, signal, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
 import { PlayerService } from '../../services/player.service';
+import { DEFAULT_TAG_COLORS } from '../../models/playlist.model';
+import { PAGE, BTN, EMPTY, LABEL, SECTION, ERROR, CONFIRM, PLURAL } from '../../constants/ui-strings';
 
 @Component({
   selector: 'app-playlist-list',
@@ -14,8 +16,27 @@ import { PlayerService } from '../../services/player.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistListComponent {
+  readonly strings = { PAGE, BTN, EMPTY, LABEL, SECTION, PLURAL };
   private destroyRef = inject(DestroyRef);
   importError = signal('');
+
+  // F8: Playlist Tags
+  readonly presetTags = Object.keys(DEFAULT_TAG_COLORS);
+  readonly tagColors = DEFAULT_TAG_COLORS;
+  filterTag = signal<string | null>(null);
+  tagMenuPlaylistId = signal<string | null>(null);
+
+  usedTags = computed(() => {
+    const all = this.playlistService.playlistsList().flatMap((p) => p.tags ?? []);
+    return [...new Set(all)];
+  });
+
+  filteredPlaylists = computed(() => {
+    const tag = this.filterTag();
+    const list = this.playlistService.playlistsList();
+    if (!tag) return list;
+    return list.filter((p) => (p.tags ?? []).includes(tag));
+  });
 
   constructor(
     public playlistService: PlaylistService,
@@ -25,9 +46,9 @@ export class PlaylistListComponent {
   ) {}
 
   async createPlaylist(): Promise<void> {
-    const name = await this.modal.openPrompt('Playlist name', 'New playlist');
+    const name = await this.modal.openPrompt(CONFIRM.PLAYLIST_NAME_PROMPT, CONFIRM.NEW_PLAYLIST_DEFAULT);
     if (name == null) return;
-    const id = this.playlistService.create(name.trim() || 'New playlist');
+    const id = this.playlistService.create(name.trim() || CONFIRM.NEW_PLAYLIST_DEFAULT);
     this.router.navigate(['/playlists', id]);
   }
 
@@ -39,18 +60,52 @@ export class PlaylistListComponent {
   }
 
   async rename(playlist: { id: string; name: string }): Promise<void> {
-    const name = await this.modal.openPrompt('Rename playlist', playlist.name);
+    const name = await this.modal.openPrompt(CONFIRM.RENAME_PROMPT, playlist.name);
     if (name != null && name.trim()) this.playlistService.rename(playlist.id, name.trim());
   }
 
   async delete(id: string, name: string): Promise<void> {
-    const confirmed = await this.modal.openConfirm(`Delete "${name}"?`, 'Delete');
+    const confirmed = await this.modal.openConfirm(CONFIRM.DELETE_PLAYLIST(name), BTN.DELETE);
     if (!confirmed) return;
     this.playlistService.delete(id);
   }
 
   open(id: string): void {
     this.router.navigate(['/playlists', id]);
+  }
+
+  // F8: Tag management
+  setFilterTag(tag: string | null): void {
+    this.filterTag.set(tag);
+  }
+
+  openTagMenu(playlistId: string, e: Event): void {
+    e.stopPropagation();
+    this.tagMenuPlaylistId.set(this.tagMenuPlaylistId() === playlistId ? null : playlistId);
+  }
+
+  toggleTag(playlistId: string, tag: string): void {
+    const playlist = this.playlistService.getPlaylist(playlistId);
+    if (!playlist) return;
+    if ((playlist.tags ?? []).includes(tag)) {
+      this.playlistService.removeTag(playlistId, tag);
+    } else {
+      this.playlistService.addTag(playlistId, tag);
+    }
+  }
+
+  removeTagFromPlaylist(playlistId: string, tag: string, e: Event): void {
+    e.stopPropagation();
+    this.playlistService.removeTag(playlistId, tag);
+  }
+
+  getTagColor(tag: string): string {
+    return this.tagColors[tag] ?? '#888';
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.tagMenuPlaylistId.set(null);
   }
 
   importPlaylist(): void {
@@ -68,11 +123,11 @@ export class PlaylistListComponent {
         if (id) {
           this.router.navigate(['/playlists', id]);
         } else {
-          this.importError.set('Invalid playlist file.');
+          this.importError.set(ERROR.INVALID_PLAYLIST_FILE);
         }
       };
       reader.onerror = () => {
-        this.importError.set('Failed to read file.');
+        this.importError.set(ERROR.FILE_READ_FAILED);
       };
       reader.readAsText(file);
     };

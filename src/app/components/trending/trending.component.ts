@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { AudiusApiService } from '../../services/audius-api.service';
+import { AudiusApiService, AUDIUS_GENRES } from '../../services/audius-api.service';
 import { PlayerService } from '../../services/player.service';
 import { FavoritesService } from '../../services/favorites.service';
 import type { AudiusTrack } from '../../models/audius.models';
+import { NotificationService } from '../../services/utils/notification.service';
+import { TOAST, ERROR, PAGE, LOADING, EMPTY, LABEL, LABEL_FAVORITES, BTN } from '../../constants/ui-strings';
 import { formatDuration } from '../../services/utils/format.helpers';
 import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
 
@@ -22,27 +24,38 @@ export class TrendingComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   brokenCoverIds = signal<Set<string>>(new Set());
+  readonly strings = { PAGE, LOADING, EMPTY, LABEL, LABEL_FAVORITES, BTN };
+  // F6: Genre Browsing
+  readonly genres = AUDIUS_GENRES;
+  selectedGenre = signal<string | null>(null);
 
   constructor(
     private audius: AudiusApiService,
     private player: PlayerService,
-    public favoritesService: FavoritesService
+    public favoritesService: FavoritesService,
+    private notification: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.loadTrending();
   }
 
+  selectGenre(genre: string | null): void {
+    this.selectedGenre.set(genre);
+    this.loadTrending();
+  }
+
   private loadTrending(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.audius.getTrendingTracks(50).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    const genre = this.selectedGenre() ?? undefined;
+    this.audius.getTrendingTracks(50, 0, genre).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.tracks.set(data);
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Failed to load trending tracks. Please try again.');
+        this.error.set(ERROR.TRENDING_FAILED);
         this.loading.set(false);
       }
     });
@@ -75,6 +88,18 @@ export class TrendingComponent implements OnInit {
 
   artworkUrl(track: AudiusTrack): string {
     return getPreferredArtworkUrl(this.audius, track);
+  }
+
+  // F5: Share Track
+  async shareTrack(trackId: string, e: Event): Promise<void> {
+    e.stopPropagation();
+    const url = `https://audius.co/tracks/${trackId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.notification.success(TOAST.TRACK_LINK_COPIED);
+    } catch {
+      this.notification.error(TOAST.TRACK_LINK_COPY_FAILED);
+    }
   }
 
   formatDuration = formatDuration;

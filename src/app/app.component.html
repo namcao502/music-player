@@ -1,17 +1,18 @@
 <app-playlist-modal />
 <div class="app">
   <nav class="app-nav">
-    <a routerLink="/free-music" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">Free Music</a>
-    <a routerLink="/trending" routerLinkActive="active">Trending</a>
-    <a routerLink="/playlists" routerLinkActive="active">Playlists</a>
-    <a routerLink="/favorites" routerLinkActive="active">Favorites</a>
-    <a routerLink="/history" routerLinkActive="active">History</a>
+    <a routerLink="/free-music" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">{{ strings.NAV.FREE_MUSIC }}</a>
+    <a routerLink="/trending" routerLinkActive="active">{{ strings.NAV.TRENDING }}</a>
+    <a routerLink="/playlists" routerLinkActive="active">{{ strings.NAV.PLAYLISTS }}</a>
+    <a routerLink="/favorites" routerLinkActive="active">{{ strings.NAV.FAVORITES }}</a>
+    <a routerLink="/history" routerLinkActive="active">{{ strings.NAV.HISTORY }}</a>
   </nav>
-  <button type="button" class="theme-toggle-top" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? 'Switch to light theme' : 'Switch to dark theme'">
+  <button type="button" class="theme-toggle-top" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? strings.THEME.SWITCH_TO_LIGHT : strings.THEME.SWITCH_TO_DARK">
     {{ theme.isDark() ? '☀️' : '🌙' }}
   </button>
   <main class="main-content">
     <router-outlet />
   </main>
   <app-player-bar />
+  <app-notification-toast />
 </div>

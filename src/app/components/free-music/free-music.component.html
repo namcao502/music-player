@@ -1,27 +1,43 @@
 <div class="free-music">
   <header class="header">
-    <h1>Free Music</h1>
-    <p class="subtitle">Search and play royalty-free tracks from Audius (no copyright)</p>
-    <div class="search-row">
-      <input
-        type="text"
-        class="search-input"
-        placeholder="Search tracks, artists..."
-        [ngModel]="query()"
-        (ngModelChange)="query.set($event)"
-        (keyup.enter)="onSearch()"
-      />
-      <button type="button" class="search-btn" (click)="onSearch()">Search</button>
+    <h1>{{ strings.PAGE.FREE_MUSIC_TITLE }}</h1>
+    <p class="subtitle">{{ strings.PAGE.FREE_MUSIC_SUBTITLE }}</p>
+    <div class="search-row-wrap">
+      <div class="search-row">
+        <input
+          type="text"
+          class="search-input"
+          [placeholder]="strings.PLACEHOLDER.SEARCH"
+          [ngModel]="query()"
+          (ngModelChange)="onQueryInput($event)"
+          (keyup.enter)="onSearch()"
+          (focus)="suggestions().length > 0 && showSuggestions.set(true)"
+          autocomplete="off"
+        />
+        <button type="button" class="search-btn" (click)="onSearch()">{{ strings.BTN.SEARCH }}</button>
+      </div>
+      @if (showSuggestions() && suggestions().length > 0) {
+        <ul class="suggestions-dropdown" (click)="$event.stopPropagation()">
+          @for (s of suggestions(); track s.id) {
+            <li class="suggestion-item" (click)="selectSuggestion(s)">
+              <span class="suggestion-title">{{ s.title }}</span>
+              @if (s.user?.name) {
+                <span class="suggestion-artist">{{ s.user?.name }}</span>
+              }
+            </li>
+          }
+        </ul>
+      }
     </div>
     @if (recentSearches().length > 0) {
       <div class="recent-searches">
-        <span class="recent-label">Recent:</span>
+        <span class="recent-label">{{ strings.LABEL.RECENT }}</span>
         @for (term of recentSearches(); track term) {
           <button type="button" class="recent-chip" (click)="runRecentSearch(term)">
             {{ term }}
           </button>
         }
-        <button type="button" class="recent-clear" (click)="clearRecentSearches()" title="Clear recent searches">Clear</button>
+        <button type="button" class="recent-clear" (click)="clearRecentSearches()" [attr.title]="strings.BTN.CLEAR_RECENT_SEARCHES">{{ strings.BTN.CLEAR }}</button>
       </div>
     }
   </header>
@@ -33,14 +49,14 @@
   @if (loading()) {
     <div class="loading-state">
       <div class="loading-spinner"></div>
-      <p>Searching…</p>
+      <p>{{ strings.LOADING.SEARCHING }}</p>
     </div>
   } @else if (tracks().length > 0) {
     <section class="section">
       <div class="section-header">
-        <h2 class="section-title">Results</h2>
+        <h2 class="section-title">{{ strings.SECTION.RESULTS }}</h2>
         <div class="sort-controls">
-          <span class="sort-label">Sort:</span>
+          <span class="sort-label">{{ strings.LABEL.SORT }}</span>
           <div class="sort-dropdown-wrap">
             <button type="button" class="sort-trigger" (click)="toggleSortDropdown($event)">
               {{ sortLabel() }}
@@ -48,10 +64,10 @@
             </button>
             @if (sortDropdownOpen()) {
               <div class="sort-dropdown" (click)="$event.stopPropagation()">
-                <button type="button" class="sort-option" [class.active]="sortMode() === 'default'" (click)="selectSortMode('default')">Default</button>
-                <button type="button" class="sort-option" [class.active]="sortMode() === 'duration-asc'" (click)="selectSortMode('duration-asc')">Duration (short first)</button>
-                <button type="button" class="sort-option" [class.active]="sortMode() === 'duration-desc'" (click)="selectSortMode('duration-desc')">Duration (long first)</button>
-                <button type="button" class="sort-option" [class.active]="sortMode() === 'artist'" (click)="selectSortMode('artist')">Artist name</button>
+                <button type="button" class="sort-option" [class.active]="sortMode() === 'default'" (click)="selectSortMode('default')">{{ strings.SORT.DEFAULT }}</button>
+                <button type="button" class="sort-option" [class.active]="sortMode() === 'duration-asc'" (click)="selectSortMode('duration-asc')">{{ strings.SORT.DURATION_ASC }}</button>
+                <button type="button" class="sort-option" [class.active]="sortMode() === 'duration-desc'" (click)="selectSortMode('duration-desc')">{{ strings.SORT.DURATION_DESC }}</button>
+                <button type="button" class="sort-option" [class.active]="sortMode() === 'artist'" (click)="selectSortMode('artist')">{{ strings.SORT.ARTIST }}</button>
               </div>
             }
           </div>
@@ -82,8 +98,8 @@
               class="fav-btn"
               [class.is-fav]="favoritesService.isFavorite(track.id)"
               (click)="toggleFavorite(track.id, $event)"
-              [attr.aria-label]="favoritesService.isFavorite(track.id) ? 'Remove from favorites' : 'Add to favorites'"
-              [attr.title]="favoritesService.isFavorite(track.id) ? 'Remove from favorites' : 'Add to favorites'"
+              [attr.aria-label]="favoritesService.isFavorite(track.id) ? strings.LABEL_FAVORITES.REMOVE : strings.LABEL_FAVORITES.ADD"
+              [attr.title]="favoritesService.isFavorite(track.id) ? strings.LABEL_FAVORITES.REMOVE : strings.LABEL_FAVORITES.ADD"
             >
               <svg class="icon-heart" viewBox="0 0 24 24" aria-hidden="true">
                 @if (favoritesService.isFavorite(track.id)) {
@@ -93,13 +109,23 @@
                 }
               </svg>
             </button>
+            <!-- F5: Share Track -->
+            <button
+              type="button"
+              class="share-btn"
+              (click)="shareTrack(track.id, $event)"
+              [attr.aria-label]="strings.BTN.SHARE_TRACK"
+              [attr.title]="strings.BTN.SHARE_TRACK"
+            >
+              <svg class="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            </button>
             <button
               type="button"
               class="add-to-playlist-btn"
               (click)="openAddToPlaylist(track.id, $event)"
               [attr.aria-expanded]="addToPlaylistTrackId() === track.id"
-              aria-label="Add to playlist"
-              title="Add to playlist"
+              [attr.aria-label]="strings.SECTION.ADD_TO_PLAYLIST"
+              [attr.title]="strings.SECTION.ADD_TO_PLAYLIST"
             >
               <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
@@ -109,9 +135,9 @@
                 [class.dropdown-open-left]="addToPlaylistDropdownLeft()"
                 (click)="$event.stopPropagation()"
               >
-                <p class="dropdown-title">Add to playlist</p>
+                <p class="dropdown-title">{{ strings.SECTION.ADD_TO_PLAYLIST }}</p>
                 @if (playlistService.playlistsList().length === 0) {
-                  <p class="dropdown-empty">No playlists yet.</p>
+                  <p class="dropdown-empty">{{ strings.EMPTY.PLAYLISTS_NO_PLAYLISTS }}</p>
                 } @else {
                   @for (playlist of playlistService.playlistsList(); track playlist.id) {
                     <button
@@ -128,7 +154,7 @@
                   class="dropdown-item dropdown-item-new"
                   (click)="createPlaylistAndAddTrack(track.id)"
                 >
-                  Create new playlist
+                  {{ strings.BTN.CREATE_NEW_PLAYLIST }}
                 </button>
               </div>
             }
@@ -137,9 +163,9 @@
       </div>
       <div class="pagination">
         <span class="pagination-info">
-          Page {{ page() }}
+          {{ strings.LABEL.PAGE }} {{ page() }}
           @if (!hasNextPage() && page() === 1 && tracks().length > 0) {
-            <span class="pagination-hint">(one page — {{ tracks().length }} results)</span>
+            <span class="pagination-hint">{{ strings.PAGINATION.ONE_PAGE_HINT(tracks().length) }}</span>
           }
         </span>
         <div class="pagination-btns">
@@ -148,23 +174,23 @@
             class="pagination-btn"
             (click)="goToPrevPage()"
             [disabled]="page() <= 1 || loading()"
-            aria-label="Previous page"
+              [attr.aria-label]="strings.BTN.PREV_PAGE"
           >
-            ‹ Previous
+            {{ strings.BTN.PREV_PAGE }}
           </button>
           <button
             type="button"
             class="pagination-btn"
             (click)="goToNextPage()"
             [disabled]="!hasNextPage() || loading()"
-            aria-label="Next page"
+              [attr.aria-label]="strings.BTN.NEXT_PAGE"
           >
-            Next ›
+            {{ strings.BTN.NEXT_PAGE }}
           </button>
         </div>
       </div>
     </section>
   } @else {
-    <p class="empty">Enter a search term and click Search to find free music.</p>
+    <p class="empty">{{ strings.EMPTY.FREE_MUSIC }}</p>
   }
 </div>

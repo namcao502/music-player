@@ -14,16 +14,21 @@ import { Router } from '@angular/router';
 import { PlayerService } from '../../services/player.service';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
+import { SleepTimerService } from '../../services/sleep-timer.service';
+import { NotificationService } from '../../services/utils/notification.service';
+import { TOAST, SECTION, BTN, EMPTY, LABEL, SLEEP_TIMER, CONFIRM } from '../../constants/ui-strings';
+import { AudioVisualizerComponent } from '../audio-visualizer/audio-visualizer.component';
 
 @Component({
   selector: 'app-player-bar',
   standalone: true,
-  imports: [],
+  imports: [AudioVisualizerComponent],
   templateUrl: './player-bar.component.html',
   styleUrl: './player-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlayerBarComponent implements OnDestroy {
+  readonly strings = { SECTION, BTN, EMPTY, LABEL, SLEEP_TIMER };
   private audioRef = viewChild<ElementRef<HTMLAudioElement>>('audioEl');
   private attachedEl: HTMLAudioElement | null = null;
   /** Track id we last set on the audio element (stream URL may not contain id, e.g. Audius). */
@@ -52,6 +57,26 @@ export class PlayerBarComponent implements OnDestroy {
   queueAddToPlaylistTrackId = signal<string | null>(null);
   /** Volume level 0–1. */
   volume = signal(1);
+
+  // F1: Sleep Timer
+  sleepTimerMenuOpen = signal(false);
+
+  // F2: Mute Toggle
+  previousVolume = signal(1);
+
+  // F4: Playback Speed
+  readonly SPEED_OPTIONS = [0.5, 1, 1.5, 2];
+  playbackSpeed = signal(1);
+  speedMenuOpen = signal(false);
+
+  // F9: Mini Player Mode
+  miniMode = signal(false);
+
+  // F10: Audio Visualizer
+  showVisualizer = signal(false);
+  analyserNode: AnalyserNode | null = null;
+  private audioCtx: AudioContext | null = null;
+  private audioSource: MediaElementAudioSourceNode | null = null;
   /** Total queue duration in seconds. */
   totalQueueDuration = computed(() => {
     return this.player.queueList().reduce((sum, t) => sum + (t.duration || 0), 0);
@@ -85,7 +110,9 @@ export class PlayerBarComponent implements OnDestroy {
     public player: PlayerService,
     public playlistService: PlaylistService,
     private playlistModal: PlaylistModalService,
-    private router: Router
+    private router: Router,
+    public sleepTimer: SleepTimerService,
+    private notification: NotificationService
   ) {
     afterNextRender(() => {
       const el = this.audioRef()?.nativeElement;
@@ -97,6 +124,8 @@ export class PlayerBarComponent implements OnDestroy {
           this.suppressAudioEventsUntil = Date.now() + 1500;
           el.src = url;
           el.load();
+          // F4: Browser resets playbackRate on load(), re-apply
+          el.playbackRate = this.playbackSpeed();
           this.currentTime.set(0);
           const np = this.player.nowPlaying();
           if (np) this.duration.set(np.track.duration);
@@ -130,6 +159,8 @@ export class PlayerBarComponent implements OnDestroy {
           this.suppressAudioEventsUntil = Date.now() + 1500;
           el.src = np.streamUrl;
           el.load();
+          // F4: Browser resets playbackRate on load(), re-apply
+          el.playbackRate = this.playbackSpeed();
           if (playing) this.startPlayWhenReady(el);
         }
       }
@@ -336,9 +367,12 @@ export class PlayerBarComponent implements OnDestroy {
   }
 
   async createPlaylistAndAddQueueTrack(trackId: string): Promise<void> {
-    const name = await this.playlistModal.openPrompt('New playlist name', 'New playlist');
+    const name = await this.playlistModal.openPrompt(
+      CONFIRM.NEW_PLAYLIST_NAME_PROMPT,
+      CONFIRM.NEW_PLAYLIST_DEFAULT
+    );
     if (name == null) return;
-    const id = this.playlistService.create(name.trim() || 'New playlist');
+    const id = this.playlistService.create(name.trim() || CONFIRM.NEW_PLAYLIST_DEFAULT);
     this.playlistService.addTrack(id, trackId);
     this.queueAddToPlaylistTrackId.set(null);
     this.router.navigate(['/playlists', id]);
@@ -354,6 +388,7 @@ export class PlayerBarComponent implements OnDestroy {
     this.clearCrossfade();
     this.player.clearQueue();
     this.player.stop();
+    this.notification.success(TOAST.QUEUE_CLEARED);
   }
 
   onVolumeInput(value: number): void {
@@ -362,8 +397,82 @@ export class PlayerBarComponent implements OnDestroy {
     if (el) el.volume = value;
   }
 
+  // F1: Sleep Timer
+  toggleSleepTimerMenu(): void {
+    this.sleepTimerMenuOpen.update((v) => !v);
+  }
+
+  startSleepTimer(minutes: number): void {
+    this.sleepTimer.start(minutes);
+    this.sleepTimerMenuOpen.set(false);
+  }
+
+  cancelSleepTimer(): void {
+    this.sleepTimer.cancel();
+    this.sleepTimerMenuOpen.set(false);
+  }
+
+  formatTimer(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // F2: Mute Toggle
+  toggleMute(): void {
+    if (this.volume() === 0) {
+      const prev = this.previousVolume();
+      this.onVolumeInput(prev > 0 ? prev : 1);
+    } else {
+      this.previousVolume.set(this.volume());
+      this.onVolumeInput(0);
+    }
+  }
+
+  // F4: Playback Speed
+  toggleSpeedMenu(): void {
+    this.speedMenuOpen.update((v) => !v);
+  }
+
+  setPlaybackSpeed(speed: number): void {
+    this.playbackSpeed.set(speed);
+    const el = this.audioRef()?.nativeElement;
+    if (el) el.playbackRate = speed;
+    this.speedMenuOpen.set(false);
+  }
+
+  // F9: Mini Player Mode
+  toggleMiniMode(): void {
+    this.miniMode.update((v) => !v);
+    if (this.miniMode()) {
+      this.showQueue.set(false);
+    }
+  }
+
+  // F10: Audio Visualizer
+  toggleVisualizer(): void {
+    if (!this.showVisualizer()) {
+      this.ensureAudioContext();
+    }
+    this.showVisualizer.update((v) => !v);
+  }
+
+  private ensureAudioContext(): void {
+    if (this.audioCtx) return;
+    const el = this.audioRef()?.nativeElement;
+    if (!el) return;
+    this.audioCtx = new AudioContext();
+    this.audioSource = this.audioCtx.createMediaElementSource(el);
+    this.analyserNode = this.audioCtx.createAnalyser();
+    this.analyserNode.fftSize = 128;
+    this.audioSource.connect(this.analyserNode);
+    this.analyserNode.connect(this.audioCtx.destination);
+  }
+
   @HostListener('document:click')
   onDocumentClick(): void {
     this.closeQueueAddToPlaylist();
+    this.sleepTimerMenuOpen.set(false);
+    this.speedMenuOpen.set(false);
   }
 }

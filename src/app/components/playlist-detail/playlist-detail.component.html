@@ -1,35 +1,34 @@
 <div class="playlist-detail">
   @if (playlist(); as p) {
     <header class="header">
-      <button type="button" class="back-btn" (click)="back()">← Playlists</button>
+      <button type="button" class="back-btn" (click)="back()">{{ strings.BTN.BACK_PLAYLISTS }}</button>
       <h1>{{ p.name }}</h1>
-      <p class="meta">{{ p.trackIds.length }} track{{ p.trackIds.length === 1 ? '' : 's' }}</p>
+      <p class="meta">{{ strings.PLURAL.TRACKS(p.trackIds.length) }}</p>
       <div class="header-actions">
-        <button type="button" class="btn-primary" (click)="play()" [disabled]="p.trackIds.length === 0">Play</button>
-        <button type="button" class="btn-secondary" (click)="rename()">Rename</button>
-        <button type="button" class="btn-secondary" (click)="exportPlaylist()" [disabled]="p.trackIds.length === 0">Export</button>
-        <button type="button" class="btn-secondary danger" (click)="deletePlaylist()">Delete playlist</button>
+        <button type="button" class="btn-primary" (click)="play()" [disabled]="p.trackIds.length === 0">{{ strings.BTN.PLAY }}</button>
+        <button type="button" class="btn-secondary" (click)="rename()">{{ strings.BTN.RENAME }}</button>
+        <button type="button" class="btn-secondary" (click)="exportPlaylist()" [disabled]="p.trackIds.length === 0">{{ strings.BTN.EXPORT }}</button>
+        <button type="button" class="btn-secondary danger" (click)="deletePlaylist()">{{ strings.BTN.DELETE_PLAYLIST }}</button>
       </div>
     </header>
 
     @if (loading()) {
-      <p class="loading">Loading tracks…</p>
+      <p class="loading">{{ strings.LOADING.TRACKS }}</p>
     } @else if (tracks().length === 0) {
-      <p class="empty">No tracks. Add tracks from Free Music.</p>
+      <p class="empty">{{ strings.EMPTY.PLAYLIST_DETAIL }}</p>
     } @else {
-      <ul class="track-list">
+      <ul class="track-list" cdkDropList (cdkDropListDropped)="onDrop($event)">
         @for (track of tracks(); track track.id; let i = $index) {
-          <li class="track-item">
-            <div class="track-reorder">
-              <button type="button" class="btn-move" (click)="moveTrackUp(i)" [disabled]="i === 0" title="Move up" aria-label="Move up">▲</button>
-              <button type="button" class="btn-move" (click)="moveTrackDown(i)" [disabled]="i === tracks().length - 1" title="Move down" aria-label="Move down">▼</button>
+          <li class="track-item" cdkDrag>
+            <div class="drag-handle" cdkDragHandle [attr.title]="strings.BTN.DRAG_REORDER" [attr.aria-label]="strings.BTN.DRAG_REORDER">
+              <svg class="icon-drag" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
             </div>
             <span class="track-title">{{ track.title }}</span>
             @if (track.user?.name) {
               <span class="track-artist">{{ track.user?.name }}</span>
             }
             <span class="track-duration">{{ formatDuration(track.duration) }}</span>
-            <button type="button" class="btn-remove" (click)="removeTrack(track.id)" title="Remove from playlist">×</button>
+            <button type="button" class="btn-remove" (click)="removeTrack(track.id)" [attr.title]="strings.BTN.REMOVE_FROM_PLAYLIST" [attr.aria-label]="strings.BTN.REMOVE_FROM_PLAYLIST">×</button>
           </li>
         }
       </ul>

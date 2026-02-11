@@ -2,7 +2,24 @@ import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, inject, O
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged, filter, switchMap } from 'rxjs';
 import { AudiusApiService } from '../../services/audius-api.service';
+import { NotificationService } from '../../services/utils/notification.service';
+import {
+  TOAST,
+  ERROR,
+  PAGE,
+  BTN,
+  EMPTY,
+  LOADING,
+  SECTION,
+  LABEL,
+  SORT,
+  PLACEHOLDER,
+  PAGINATION,
+  CONFIRM,
+  LABEL_FAVORITES
+} from '../../constants/ui-strings';
 import { FreeMusicStateService } from '../../services/free-music-state.service';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlayerService } from '../../services/player.service';
@@ -45,6 +62,19 @@ export class FreeMusicComponent implements OnInit {
   sortMode = signal<'default' | 'duration-asc' | 'duration-desc' | 'artist'>('default');
   /** Whether the custom sort dropdown is open. */
   sortDropdownOpen = signal(false);
+  readonly strings = {
+    PAGE,
+    BTN,
+    EMPTY,
+    LOADING,
+    SECTION,
+    LABEL,
+    LABEL_FAVORITES,
+    SORT,
+    PLACEHOLDER,
+    PAGINATION
+  };
+
   /** Sorted tracks based on sortMode. */
   sortedTracks = computed(() => {
     const list = [...this.tracks()];
@@ -55,6 +85,14 @@ export class FreeMusicComponent implements OnInit {
     return list;
   });
 
+  // F7: Search Autocomplete
+  suggestions = signal<import('../../models/audius.models').AudiusTrack[]>([]);
+  showSuggestions = signal(false);
+  private searchSubject = new Subject<string>();
+
+  // F5: Share Track
+  private notification: NotificationService;
+
   constructor(
     private audius: AudiusApiService,
     private player: PlayerService,
@@ -62,8 +100,22 @@ export class FreeMusicComponent implements OnInit {
     private freeMusicState: FreeMusicStateService,
     private playlistModal: PlaylistModalService,
     public favoritesService: FavoritesService,
-    private router: Router
-  ) {}
+    private router: Router,
+    notification: NotificationService
+  ) {
+    this.notification = notification;
+    // F7: Autocomplete pipe
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      filter((q) => q.trim().length >= 2),
+      switchMap((q) => this.audius.searchTracks(q.trim(), 6)),
+      takeUntilDestroyed()
+    ).subscribe((results) => {
+      this.suggestions.set(results);
+      this.showSuggestions.set(results.length > 0);
+    });
+  }
 
   ngOnInit(): void {
     this.restoreStateFromService();
@@ -108,6 +160,8 @@ export class FreeMusicComponent implements OnInit {
   onSearch(): void {
     const q = this.query().trim();
     if (!q) return;
+    this.showSuggestions.set(false);
+    this.suggestions.set([]);
     this.addToRecentSearches(q);
     this.error.set('');
     this.brokenCoverIds.set(new Set());
@@ -144,7 +198,7 @@ export class FreeMusicComponent implements OnInit {
         this.saveStateToService();
       },
       error: () => {
-        this.error.set('Search failed. Try again.');
+        this.error.set(ERROR.SEARCH_FAILED);
         this.loading.set(false);
       }
     });
@@ -223,9 +277,9 @@ export class FreeMusicComponent implements OnInit {
   }
 
   async createPlaylistAndAddTrack(trackId: string): Promise<void> {
-    const name = await this.playlistModal.openPrompt('New playlist name', 'New playlist');
+    const name = await this.playlistModal.openPrompt(CONFIRM.NEW_PLAYLIST_NAME_PROMPT, CONFIRM.NEW_PLAYLIST_DEFAULT);
     if (name == null) return;
-    const id = this.playlistService.create(name.trim() || 'New playlist');
+    const id = this.playlistService.create(name.trim() || CONFIRM.NEW_PLAYLIST_DEFAULT);
     this.playlistService.addTrack(id, trackId);
     this.addToPlaylistTrackId.set(null);
     this.router.navigate(['/playlists', id]);
@@ -252,17 +306,51 @@ export class FreeMusicComponent implements OnInit {
 
   sortLabel(): string {
     const labels: Record<string, string> = {
-      'default': 'Default',
-      'duration-asc': 'Duration (short first)',
-      'duration-desc': 'Duration (long first)',
-      'artist': 'Artist name'
+      'default': SORT.DEFAULT,
+      'duration-asc': SORT.DURATION_ASC,
+      'duration-desc': SORT.DURATION_DESC,
+      'artist': SORT.ARTIST
     };
-    return labels[this.sortMode()] ?? 'Default';
+    return labels[this.sortMode()] ?? SORT.DEFAULT;
+  }
+
+  // F7: Autocomplete handlers
+  onQueryInput(value: string): void {
+    this.query.set(value);
+    if (value.trim().length < 2) {
+      this.showSuggestions.set(false);
+      this.suggestions.set([]);
+    }
+    this.searchSubject.next(value);
+  }
+
+  selectSuggestion(track: AudiusTrack): void {
+    this.query.set(track.title);
+    this.showSuggestions.set(false);
+    this.suggestions.set([]);
+    this.onSearch();
+  }
+
+  closeSuggestions(): void {
+    this.showSuggestions.set(false);
+  }
+
+  // F5: Share Track
+  async shareTrack(trackId: string, e: Event): Promise<void> {
+    e.stopPropagation();
+    const url = `https://audius.co/tracks/${trackId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.notification.success(TOAST.TRACK_LINK_COPIED);
+    } catch {
+      this.notification.error(TOAST.TRACK_LINK_COPY_FAILED);
+    }
   }
 
   @HostListener('document:click')
   onDocumentClick(): void {
     this.closeAddToPlaylist();
     this.sortDropdownOpen.set(false);
+    this.showSuggestions.set(false);
   }
 }

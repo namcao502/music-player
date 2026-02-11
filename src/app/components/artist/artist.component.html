@@ -1,19 +1,19 @@
 <div class="artist-page">
   <header class="header">
-    <button type="button" class="back-btn" (click)="back()">← Back</button>
-    <h1>{{ artistName() || 'Artist' }}</h1>
+    <button type="button" class="back-btn" (click)="back()">{{ strings.BTN.BACK }}</button>
+    <h1>{{ artistName() || strings.PAGE.ARTIST_FALLBACK }}</h1>
     @if (artistHandle()) {
       <p class="handle">{{'@'}}{{ artistHandle() }}</p>
     }
     @if (tracks().length > 0) {
-      <button type="button" class="btn-primary" (click)="playAll()">Play all</button>
+      <button type="button" class="btn-primary" (click)="playAll()">{{ strings.BTN.PLAY_ALL }}</button>
     }
   </header>
 
   @if (loading()) {
     <div class="loading-state">
       <div class="loading-spinner"></div>
-      <p>Loading tracks…</p>
+      <p>{{ strings.LOADING.TRACKS }}</p>
     </div>
   } @else if (tracks().length > 0) {
     <ul class="track-list">
@@ -36,7 +36,7 @@
             class="fav-btn"
             [class.is-fav]="favoritesService.isFavorite(track.id)"
             (click)="toggleFavorite(track.id, $event)"
-            [attr.aria-label]="favoritesService.isFavorite(track.id) ? 'Remove from favorites' : 'Add to favorites'"
+            [attr.aria-label]="favoritesService.isFavorite(track.id) ? strings.LABEL_FAVORITES.REMOVE : strings.LABEL_FAVORITES.ADD"
           >
             <svg class="icon-heart" viewBox="0 0 24 24" aria-hidden="true">
               @if (favoritesService.isFavorite(track.id)) {
@@ -50,6 +50,6 @@
       }
     </ul>
   } @else {
-    <p class="empty">No tracks found for this artist.</p>
+    <p class="empty">{{ strings.EMPTY.ARTIST }}</p>
   }
 </div>

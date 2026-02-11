@@ -1,6 +1,7 @@
 import { Injectable, signal, effect } from '@angular/core';
 import { PlayerService, type PlayableTrack } from './player.service';
 import { NotificationService } from './utils/notification.service';
+import { TOAST } from '../constants/ui-strings';
 
 export interface HistoryEntry {
   track: PlayableTrack;
@@ -41,6 +42,7 @@ export class HistoryService {
   clearHistory(): void {
     this.history.set([]);
     this.saveToStorage();
+    this.notification.success(TOAST.HISTORY_CLEARED);
   }
 
   private loadFromStorage(): HistoryEntry[] {
@@ -61,7 +63,7 @@ export class HistoryService {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.history()));
     } catch (error) {
       console.error('Failed to save history to localStorage:', error);
-      this.notification.error('Failed to save history. Storage may be full.');
+      this.notification.error(TOAST.HISTORY_SAVE_FAILED);
     }
   }
 }

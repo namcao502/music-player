@@ -2,23 +2,27 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, map } from 'rxjs';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import type { AudiusTrack } from '../../models/audius.models';
 import { AudiusApiService } from '../../services/audius-api.service';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
 import { PlayerService } from '../../services/player.service';
+import { NotificationService } from '../../services/utils/notification.service';
+import { TOAST, BTN, EMPTY, LOADING, PLURAL, CONFIRM } from '../../constants/ui-strings';
 import { formatDuration } from '../../services/utils/format.helpers';
 import { getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
 
 @Component({
   selector: 'app-playlist-detail',
   standalone: true,
-  imports: [],
+  imports: [DragDropModule],
   templateUrl: './playlist-detail.component.html',
   styleUrl: './playlist-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistDetailComponent implements OnInit {
+  readonly strings = { BTN, EMPTY, LOADING, PLURAL };
   private destroyRef = inject(DestroyRef);
   playlist = signal<{ id: string; name: string; trackIds: string[] } | null>(null);
   tracks = signal<AudiusTrack[]>([]);
@@ -30,7 +34,8 @@ export class PlaylistDetailComponent implements OnInit {
     public playlistService: PlaylistService,
     private audius: AudiusApiService,
     private player: PlayerService,
-    private modal: PlaylistModalService
+    private modal: PlaylistModalService,
+    private notification: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -89,7 +94,7 @@ export class PlaylistDetailComponent implements OnInit {
   async rename(): Promise<void> {
     const p = this.playlist();
     if (!p) return;
-    const name = await this.modal.openPrompt('Rename playlist', p.name);
+    const name = await this.modal.openPrompt(CONFIRM.RENAME_PROMPT, p.name);
     if (name != null && name.trim()) {
       this.playlistService.rename(p.id, name.trim());
       this.playlist.set({ ...p, name: name.trim() });
@@ -99,36 +104,24 @@ export class PlaylistDetailComponent implements OnInit {
   async deletePlaylist(): Promise<void> {
     const p = this.playlist();
     if (!p) return;
-    const confirmed = await this.modal.openConfirm(`Delete "${p.name}"?`, 'Delete');
+    const confirmed = await this.modal.openConfirm(CONFIRM.DELETE_PLAYLIST(p.name), BTN.DELETE);
     if (!confirmed) return;
     this.playlistService.delete(p.id);
     this.router.navigate(['/playlists']);
   }
 
-  moveTrackUp(index: number): void {
-    if (index <= 0) return;
+  // F3: Drag-and-Drop Reorder
+  onDrop(event: CdkDragDrop<AudiusTrack[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
     const p = this.playlist();
     if (!p) return;
-    this.playlistService.moveTrack(p.id, index, index - 1);
+    this.playlistService.moveTrack(p.id, event.previousIndex, event.currentIndex);
     this.playlist.set(this.playlistService.getPlaylist(p.id) ?? null);
     this.tracks.update((list) => {
       const arr = [...list];
-      [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+      const [item] = arr.splice(event.previousIndex, 1);
+      arr.splice(event.currentIndex, 0, item);
       return arr;
-    });
-  }
-
-  moveTrackDown(index: number): void {
-    const p = this.playlist();
-    if (!p) return;
-    const list = this.tracks();
-    if (index >= list.length - 1) return;
-    this.playlistService.moveTrack(p.id, index, index + 1);
-    this.playlist.set(this.playlistService.getPlaylist(p.id) ?? null);
-    this.tracks.update((arr) => {
-      const copy = [...arr];
-      [copy[index], copy[index + 1]] = [copy[index + 1], copy[index]];
-      return copy;
     });
   }
 
@@ -144,6 +137,7 @@ export class PlaylistDetailComponent implements OnInit {
     a.download = `${p.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    this.notification.success(TOAST.PLAYLIST_EXPORTED);
   }
 
   back(): void {

@@ -2,19 +2,23 @@ import { ChangeDetectionStrategy, Component, HostListener } from '@angular/core'
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { PlayerBarComponent } from './components/player-bar/player-bar.component';
 import { PlaylistModalComponent } from './components/playlist-modal/playlist-modal.component';
+import { NotificationToastComponent } from './components/notification-toast/notification-toast.component';
 import { ThemeService } from './services/theme.service';
 import { PlayerService } from './services/player.service';
 import { HistoryService } from './services/history.service';
+import { NAV, THEME } from './constants/ui-strings';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, PlayerBarComponent, PlaylistModalComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, PlayerBarComponent, PlaylistModalComponent, NotificationToastComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
+  readonly strings = { NAV, THEME };
+
   constructor(
     public theme: ThemeService,
     private player: PlayerService,

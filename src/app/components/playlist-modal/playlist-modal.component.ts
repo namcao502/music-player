@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
+import { BTN } from '../../constants/ui-strings';
 
 @Component({
   selector: 'app-playlist-modal',
@@ -11,6 +12,7 @@ import { PlaylistModalService } from '../../services/playlist-modal.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistModalComponent {
+  readonly strings = { BTN };
   /** Local value for the prompt input; synced when prompt opens. */
   promptValue = signal('');
 

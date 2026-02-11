@@ -24,10 +24,14 @@
     font-weight: 500;
   }
 
+  .search-row-wrap {
+    position: relative;
+    max-width: 480px;
+  }
+
   .search-row {
     display: flex;
     gap: 0.75rem;
-    max-width: 480px;
   }
 
   .search-input {
@@ -114,6 +118,91 @@
       color: var(--text-primary);
     }
   }
+}
+
+/* F7: Search Autocomplete Dropdown */
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 20;
+  list-style: none;
+  padding: 0.35rem 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.suggestion-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestion-artist {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* F5: Share Button — centered between fav (left) and add-to-playlist (right) */
+.share-btn {
+  position: absolute;
+  top: 0.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  z-index: 1;
+  transition: background 0.2s, opacity 0.2s;
+
+  .icon-share {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  &:hover {
+    background: var(--spotify-green);
+    color: var(--text-on-accent);
+    opacity: 1;
+  }
+}
+
+.track-card-wrap:hover .share-btn {
+  opacity: 0.9;
 }
 
 .error {

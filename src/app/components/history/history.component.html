@@ -1,14 +1,14 @@
 <div class="history-page">
   <header class="header">
-    <h1>Play History</h1>
-    <p class="subtitle">Your recently played tracks</p>
+    <h1>{{ strings.PAGE.HISTORY_TITLE }}</h1>
+    <p class="subtitle">{{ strings.PAGE.HISTORY_SUBTITLE }}</p>
     @if (historyService.historyList().length > 0) {
-      <button type="button" class="btn-clear" (click)="clearHistory()">Clear history</button>
+      <button type="button" class="btn-clear" (click)="clearHistory()">{{ strings.BTN.CLEAR_HISTORY }}</button>
     }
   </header>
 
   @if (historyService.historyList().length === 0) {
-    <p class="empty">No play history yet. Start playing some music!</p>
+    <p class="empty">{{ strings.EMPTY.HISTORY }}</p>
   } @else {
     <ul class="track-list">
       @for (entry of historyService.historyList(); track entry.track.id) {
