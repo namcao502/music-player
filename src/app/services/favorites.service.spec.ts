@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { FavoritesService } from './favorites.service';
+import { NotificationService } from './utils/notification.service';
 
 describe('FavoritesService', () => {
   let service: FavoritesService;
   let store: Record<string, string>;
+  let notificationSpy: jasmine.SpyObj<NotificationService>;
 
   beforeEach(() => {
     store = {};
@@ -12,7 +14,13 @@ describe('FavoritesService', () => {
       store[key] = value;
     });
 
-    TestBed.configureTestingModule({ providers: [FavoritesService] });
+    notificationSpy = jasmine.createSpyObj('NotificationService', ['error', 'warning', 'success']);
+    TestBed.configureTestingModule({
+      providers: [
+        FavoritesService,
+        { provide: NotificationService, useValue: notificationSpy }
+      ]
+    });
     service = TestBed.inject(FavoritesService);
   });
 

@@ -1,6 +1,11 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { NotificationService } from './utils/notification.service';
 
 const STORAGE_KEY = 'music-player-favorites';
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
 
 @Injectable({ providedIn: 'root' })
 export class FavoritesService {
@@ -8,12 +13,14 @@ export class FavoritesService {
 
   favoriteIds = computed(() => this.favorites());
 
+  constructor(private notification: NotificationService) {}
+
   private loadFromStorage(): Set<string> {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return new Set(parsed);
+        const parsed: unknown = JSON.parse(raw);
+        if (isStringArray(parsed)) return new Set(parsed);
       }
     } catch {
       // ignore
@@ -24,8 +31,9 @@ export class FavoritesService {
   private saveToStorage(): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...this.favorites()]));
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error('Failed to save favorites to localStorage:', error);
+      this.notification.error('Failed to save favorites. Storage may be full.');
     }
   }
 

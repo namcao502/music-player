@@ -27,7 +27,7 @@ Output is in `dist/music-player/browser/`. Serve with any static file server. PW
 npm test
 ```
 
-127 unit tests (Jasmine + Karma).
+189 unit tests (Jasmine + Karma).
 
 ---
 
