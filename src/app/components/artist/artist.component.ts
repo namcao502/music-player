@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AudiusApiService } from '../../services/audius-api.service';
 import { PlayerService } from '../../services/player.service';
@@ -14,9 +15,11 @@ import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils
   standalone: true,
   imports: [],
   templateUrl: './artist.component.html',
-  styleUrl: './artist.component.scss'
+  styleUrl: './artist.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ArtistComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   artistName = signal('');
   artistHandle = signal('');
   tracks = signal<AudiusTrack[]>([]);
@@ -45,7 +48,7 @@ export class ArtistComponent implements OnInit {
     forkJoin({
       user: this.audius.getUserById(userId).pipe(catchError(() => of(null))),
       tracks: this.audius.getUserTracks(userId, 50).pipe(catchError(() => of([] as AudiusTrack[])))
-    }).subscribe({
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (result) => {
         if (result.user) {
           this.artistName.set(result.user.name);

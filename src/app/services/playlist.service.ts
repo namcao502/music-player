@@ -1,10 +1,19 @@
 import { Injectable, signal } from '@angular/core';
-import { forkJoin, map, Observable, of } from 'rxjs';
+import { concatMap, forkJoin, from, map, Observable, of, reduce } from 'rxjs';
 import type { Playlist } from '../models/playlist.model';
 import { PLAYLISTS_STORAGE_KEY } from '../models/playlist.model';
 import { AudiusApiService } from './audius-api.service';
 import type { PlayableTrack } from './player.service';
 import { NotificationService } from './utils/notification.service';
+
+function isPlaylistArray(value: unknown): value is Playlist[] {
+  if (!Array.isArray(value)) return false;
+  return value.every((item) => {
+    if (item === null || typeof item !== 'object') return false;
+    const obj = item as Record<string, unknown>;
+    return typeof obj['id'] === 'string' && typeof obj['name'] === 'string' && Array.isArray(obj['trackIds']);
+  });
+}
 
 @Injectable({ providedIn: 'root' })
 export class PlaylistService {
@@ -20,8 +29,8 @@ export class PlaylistService {
     try {
       const raw = localStorage.getItem(PLAYLISTS_STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as Playlist[];
-        if (Array.isArray(parsed)) {
+        const parsed: unknown = JSON.parse(raw);
+        if (isPlaylistArray(parsed)) {
           this.playlists.set(parsed);
           return;
         }
@@ -125,23 +134,34 @@ export class PlaylistService {
   getPlayableTracks(playlistId: string): Observable<PlayableTrack[]> {
     const playlist = this.getPlaylist(playlistId);
     if (!playlist || playlist.trackIds.length === 0) return of([]);
-    const requests = playlist.trackIds.map((tid) => this.audius.getTrackById(tid));
-    return forkJoin(requests).pipe(
-      map((tracks) => {
-        const result: PlayableTrack[] = [];
-        tracks.forEach((t) => {
-          if (!t) return;
-          result.push({
-            id: t.id,
-            title: t.title,
-            artist: t.user?.name,
-            duration: t.duration,
-            coverArtUrl: this.audius.getArtworkUrl(t) || undefined,
-            streamUrl: this.audius.getStreamEndpointUrl(t.id)
-          });
-        });
-        return result;
-      })
+
+    const chunkSize = 10;
+    const chunks: string[][] = [];
+    for (let i = 0; i < playlist.trackIds.length; i += chunkSize) {
+      chunks.push(playlist.trackIds.slice(i, i + chunkSize));
+    }
+
+    return from(chunks).pipe(
+      concatMap((chunk) =>
+        forkJoin(chunk.map((tid) => this.audius.getTrackById(tid))).pipe(
+          map((tracks) => {
+            const result: PlayableTrack[] = [];
+            tracks.forEach((t) => {
+              if (!t) return;
+              result.push({
+                id: t.id,
+                title: t.title,
+                artist: t.user?.name,
+                duration: t.duration,
+                coverArtUrl: this.audius.getArtworkUrl(t) || undefined,
+                streamUrl: this.audius.getStreamEndpointUrl(t.id)
+              });
+            });
+            return result;
+          })
+        )
+      ),
+      reduce((acc, batch) => [...acc, ...batch], [] as PlayableTrack[])
     );
   }
 }

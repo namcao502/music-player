@@ -1,4 +1,5 @@
-import { Component, HostListener, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, inject, OnInit, signal, computed } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AudiusApiService } from '../../services/audius-api.service';
@@ -20,9 +21,11 @@ const PAGE_SIZE = 24;
   standalone: true,
   imports: [FormsModule, RouterLink],
   templateUrl: './free-music.component.html',
-  styleUrl: './free-music.component.scss'
+  styleUrl: './free-music.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FreeMusicComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   query = signal('');
   tracks = signal<AudiusTrack[]>([]);
   loading = signal(false);
@@ -133,7 +136,7 @@ export class FreeMusicComponent implements OnInit {
     this.error.set('');
     this.loading.set(true);
     const offset = (pageNum - 1) * PAGE_SIZE;
-    this.audius.searchTracks(q, PAGE_SIZE, offset).subscribe({
+    this.audius.searchTracks(q, PAGE_SIZE, offset).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.tracks.set(data);
         this.hasNextPage.set(data.length === PAGE_SIZE);

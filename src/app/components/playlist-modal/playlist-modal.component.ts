@@ -1,4 +1,4 @@
-import { Component, effect, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 
@@ -7,7 +7,8 @@ import { PlaylistModalService } from '../../services/playlist-modal.service';
   standalone: true,
   imports: [FormsModule],
   templateUrl: './playlist-modal.component.html',
-  styleUrl: './playlist-modal.component.scss'
+  styleUrl: './playlist-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistModalComponent {
   /** Local value for the prompt input; synced when prompt opens. */

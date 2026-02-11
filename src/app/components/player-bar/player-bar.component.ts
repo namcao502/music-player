@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   effect,
@@ -19,7 +20,8 @@ import { PlaylistService } from '../../services/playlist.service';
   standalone: true,
   imports: [],
   templateUrl: './player-bar.component.html',
-  styleUrl: './player-bar.component.scss'
+  styleUrl: './player-bar.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlayerBarComponent implements OnDestroy {
   private audioRef = viewChild<ElementRef<HTMLAudioElement>>('audioEl');

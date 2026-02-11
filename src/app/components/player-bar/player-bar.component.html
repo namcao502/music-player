@@ -163,7 +163,7 @@
                 @if (queueCoverErrors().has(track.id)) {
                   <span class="queue-cover-fallback" aria-hidden="true">♪</span>
                 } @else {
-                  <img [src]="coverUrl(track)" [alt]="" (error)="onQueueCoverError(track.id)" />
+                  <img [src]="coverUrl(track)" [alt]="track.title" (error)="onQueueCoverError(track.id)" />
                 }
               </div>
               <span class="queue-item-index">{{ i + 1 }}</span>

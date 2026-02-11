@@ -11,6 +11,7 @@ export interface Notification {
 export class NotificationService {
   notifications = signal<Notification[]>([]);
   private idCounter = 0;
+  private timers = new Map<string, ReturnType<typeof setTimeout>>();
 
   error(message: string, duration = 5000): void {
     this.show(message, 'error', duration);
@@ -31,13 +32,20 @@ export class NotificationService {
     this.notifications.update((list) => [...list, notification]);
 
     if (duration > 0) {
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
+        this.timers.delete(id);
         this.dismiss(id);
       }, duration);
+      this.timers.set(id, timerId);
     }
   }
 
   dismiss(id: string): void {
+    const timerId = this.timers.get(id);
+    if (timerId !== undefined) {
+      clearTimeout(timerId);
+      this.timers.delete(id);
+    }
     this.notifications.update((list) => list.filter((n) => n.id !== id));
   }
 }

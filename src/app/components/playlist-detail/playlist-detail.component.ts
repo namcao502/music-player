@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, map } from 'rxjs';
 import type { AudiusTrack } from '../../models/audius.models';
@@ -14,9 +15,11 @@ import { getPreferredArtworkUrl } from '../../services/utils/track-list.helpers'
   standalone: true,
   imports: [],
   templateUrl: './playlist-detail.component.html',
-  styleUrl: './playlist-detail.component.scss'
+  styleUrl: './playlist-detail.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistDetailComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   playlist = signal<{ id: string; name: string; trackIds: string[] } | null>(null);
   tracks = signal<AudiusTrack[]>([]);
   loading = signal(false);
@@ -53,7 +56,10 @@ export class PlaylistDetailComponent implements OnInit {
     }
     this.loading.set(true);
     forkJoin(p.trackIds.map((tid) => this.audius.getTrackById(tid)))
-      .pipe(map((arr) => arr.filter((t): t is AudiusTrack => t != null)))
+      .pipe(
+        map((arr) => arr.filter((t): t is AudiusTrack => t != null)),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: (list) => {
           this.tracks.set(list);
@@ -66,7 +72,7 @@ export class PlaylistDetailComponent implements OnInit {
   play(): void {
     const id = this.playlist()?.id;
     if (!id) return;
-    this.playlistService.getPlayableTracks(id).subscribe((playables) => {
+    this.playlistService.getPlayableTracks(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((playables) => {
       if (playables.length === 0) return;
       this.player.playQueue(playables, 0);
     });

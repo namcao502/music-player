@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { AudiusApiService } from '../../services/audius-api.service';
 import { PlayerService } from '../../services/player.service';
@@ -12,9 +13,11 @@ import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils
   standalone: true,
   imports: [RouterLink],
   templateUrl: './trending.component.html',
-  styleUrl: './trending.component.scss'
+  styleUrl: './trending.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TrendingComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   tracks = signal<AudiusTrack[]>([]);
   loading = signal(false);
   error = signal<string | null>(null);
@@ -33,7 +36,7 @@ export class TrendingComponent implements OnInit {
   private loadTrending(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.audius.getTrendingTracks(50).subscribe({
+    this.audius.getTrendingTracks(50).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.tracks.set(data);
         this.loading.set(false);

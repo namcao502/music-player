@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { HistoryService, type HistoryEntry } from '../../services/history.service';
 import { PlayerService, type PlayableTrack } from '../../services/player.service';
 import { formatDuration } from '../../services/utils/format.helpers';
@@ -8,7 +8,8 @@ import { formatDuration } from '../../services/utils/format.helpers';
   standalone: true,
   imports: [],
   templateUrl: './history.component.html',
-  styleUrl: './history.component.scss'
+  styleUrl: './history.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HistoryComponent {
   constructor(

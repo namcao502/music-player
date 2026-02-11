@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FavoritesService } from '../../services/favorites.service';
 import { AudiusApiService } from '../../services/audius-api.service';
 import { PlayerService } from '../../services/player.service';
@@ -13,9 +14,11 @@ import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils
   standalone: true,
   imports: [],
   templateUrl: './favorites.component.html',
-  styleUrl: './favorites.component.scss'
+  styleUrl: './favorites.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FavoritesComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
   tracks = signal<AudiusTrack[]>([]);
   loading = signal(false);
   brokenCoverIds = signal<Set<string>>(new Set());
@@ -40,7 +43,7 @@ export class FavoritesComponent implements OnInit {
     const requests = ids.map((id) =>
       this.audius.getTrackById(id).pipe(catchError(() => of(null)))
     );
-    forkJoin(requests).subscribe({
+    forkJoin(requests).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (results) => {
         const valid = results.filter((t): t is AudiusTrack => t != null);
         this.tracks.set(valid);

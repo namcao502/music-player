@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
@@ -9,9 +10,11 @@ import { PlayerService } from '../../services/player.service';
   standalone: true,
   imports: [],
   templateUrl: './playlist-list.component.html',
-  styleUrl: './playlist-list.component.scss'
+  styleUrl: './playlist-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistListComponent {
+  private destroyRef = inject(DestroyRef);
   importError = signal('');
 
   constructor(
@@ -29,7 +32,7 @@ export class PlaylistListComponent {
   }
 
   play(id: string): void {
-    this.playlistService.getPlayableTracks(id).subscribe((tracks) => {
+    this.playlistService.getPlayableTracks(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((tracks) => {
       if (tracks.length === 0) return;
       this.player.playQueue(tracks, 0);
     });
