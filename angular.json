@@ -122,7 +122,9 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "browsers": "ChromeHeadless",
+            "watch": false
           }
         }
       }
