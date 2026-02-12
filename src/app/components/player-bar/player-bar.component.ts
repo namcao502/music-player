@@ -81,6 +81,14 @@ export class PlayerBarComponent implements OnDestroy {
   totalQueueDuration = computed(() => {
     return this.player.queueList().reduce((sum, t) => sum + (t.duration || 0), 0);
   });
+
+  /** Announcement for screen readers when track changes. */
+  nowPlayingAnnouncement = computed(() => {
+    const np = this.player.nowPlaying();
+    if (!np) return '';
+    const { title, artist } = np.track;
+    return artist ? `Now playing: ${title} by ${artist}` : `Now playing: ${title}`;
+  });
   private timeupdateBound = (): void => this.onTimeUpdate();
   private playBound = (): void => {
     if (Date.now() < this.suppressAudioEventsUntil) return;
@@ -106,6 +114,10 @@ export class PlayerBarComponent implements OnDestroy {
     this.player.setPlaying(false);
   };
 
+  private static readonly VOLUME_STORAGE_KEY = 'music-player-volume';
+  private static readonly MUTED_STORAGE_KEY = 'music-player-muted';
+  private static readonly SPEED_STORAGE_KEY = 'music-player-playback-speed';
+
   constructor(
     public player: PlayerService,
     public playlistService: PlaylistService,
@@ -114,9 +126,12 @@ export class PlayerBarComponent implements OnDestroy {
     public sleepTimer: SleepTimerService,
     private notification: NotificationService
   ) {
+    this.loadVolumeFromStorage();
+    this.loadPlaybackSpeedFromStorage();
     afterNextRender(() => {
       const el = this.audioRef()?.nativeElement;
       if (el) {
+        el.volume = this.volume();
         this.player.registerPlaybackTrigger((url: string, trackId: string) => {
           this.clearCrossfade();
           this.loadedTrackId = trackId;
@@ -172,6 +187,32 @@ export class PlayerBarComponent implements OnDestroy {
         el.pause();
       }
     }, { allowSignalWrites: true });
+  }
+
+  private loadVolumeFromStorage(): void {
+    try {
+      const v = localStorage.getItem(PlayerBarComponent.VOLUME_STORAGE_KEY);
+      if (v != null) {
+        const num = Number(v);
+        if (Number.isFinite(num) && num >= 0 && num <= 1) this.volume.set(num);
+      }
+      const m = localStorage.getItem(PlayerBarComponent.MUTED_STORAGE_KEY);
+      if (m === 'true') {
+        this.previousVolume.set(this.volume());
+        this.volume.set(0);
+      }
+    } catch { /* ignore */ }
+  }
+
+  private loadPlaybackSpeedFromStorage(): void {
+    try {
+      const val = localStorage.getItem(PlayerBarComponent.SPEED_STORAGE_KEY);
+      if (val != null) {
+        const num = Number(val);
+        if (Number.isFinite(num) && this.SPEED_OPTIONS.includes(num))
+          this.playbackSpeed.set(num);
+      }
+    } catch { /* ignore */ }
   }
 
   ngOnDestroy(): void {
@@ -319,6 +360,14 @@ export class PlayerBarComponent implements OnDestroy {
     this.isSeeking.set(false);
   }
 
+  seekRelative(deltaSeconds: number): void {
+    const el = this.audioRef()?.nativeElement;
+    if (!el || !Number.isFinite(el.duration)) return;
+    const next = Math.max(0, Math.min(el.duration, el.currentTime + deltaSeconds));
+    el.currentTime = next;
+    this.currentTime.set(Math.floor(next));
+  }
+
   toggleQueue(): void {
     this.showQueue.update((v) => !v);
   }
@@ -391,10 +440,20 @@ export class PlayerBarComponent implements OnDestroy {
     this.notification.success(TOAST.QUEUE_CLEARED);
   }
 
+  removeFromQueue(index: number): void {
+    this.player.removeFromQueue(index);
+    this.queueAddToPlaylistTrackId.set(null);
+    this.notification.success(TOAST.REMOVED_FROM_QUEUE);
+  }
+
   onVolumeInput(value: number): void {
     this.volume.set(value);
     const el = this.audioRef()?.nativeElement;
     if (el) el.volume = value;
+    try {
+      localStorage.setItem(PlayerBarComponent.VOLUME_STORAGE_KEY, String(value));
+      localStorage.setItem(PlayerBarComponent.MUTED_STORAGE_KEY, value === 0 ? 'true' : 'false');
+    } catch { /* ignore */ }
   }
 
   // F1: Sleep Timer
@@ -439,6 +498,9 @@ export class PlayerBarComponent implements OnDestroy {
     const el = this.audioRef()?.nativeElement;
     if (el) el.playbackRate = speed;
     this.speedMenuOpen.set(false);
+    try {
+      localStorage.setItem(PlayerBarComponent.SPEED_STORAGE_KEY, String(speed));
+    } catch { /* ignore */ }
   }
 
   // F9: Mini Player Mode

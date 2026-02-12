@@ -1,4 +1,5 @@
 <audio #audioEl class="audio-el"></audio>
+<div class="sr-only" aria-live="polite" aria-atomic="true">{{ nowPlayingAnnouncement() }}</div>
 @if (player.nowPlaying(); as np) {
   <div class="player-bar" [class.mini-player]="miniMode()">
 
@@ -85,6 +86,7 @@
         </button>
       </div>
       <div class="progress-wrap">
+        <button type="button" class="seek-btn" (click)="seekRelative(-10)" [attr.aria-label]="strings.BTN.SEEK_BACK" [attr.title]="strings.BTN.SEEK_BACK">−10</button>
         <span class="time time-current">{{ formatDuration(currentTime()) }}</span>
         <input
           type="range"
@@ -97,6 +99,7 @@
           [attr.aria-label]="strings.BTN.SEEK"
         />
         <span class="time time-total">{{ formatDuration(duration()) }}</span>
+        <button type="button" class="seek-btn" (click)="seekRelative(10)" [attr.aria-label]="strings.BTN.SEEK_FORWARD" [attr.title]="strings.BTN.SEEK_FORWARD">+10</button>
       </div>
     </div>
 
@@ -239,6 +242,15 @@
                 <span class="queue-item-artist">{{ track.artist }}</span>
               }
               <span class="queue-item-duration">{{ formatDuration(track.duration) }}</span>
+              <button
+                type="button"
+                class="queue-item-remove-btn"
+                (click)="removeFromQueue(i); $event.stopPropagation()"
+                [attr.aria-label]="strings.BTN.REMOVE_FROM_QUEUE"
+                [attr.title]="strings.BTN.REMOVE_FROM_QUEUE"
+              >
+                <svg class="icon icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
               <button
                 type="button"
                 class="queue-item-add-btn"

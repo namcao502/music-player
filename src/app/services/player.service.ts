@@ -157,6 +157,22 @@ export class PlayerService {
     this.queue.set([]);
   }
 
+  /** Remove track at index from queue. If it's the current track, advance to next or stop. */
+  removeFromQueue(index: number): void {
+    const list = [...this.queue()];
+    if (index < 0 || index >= list.length) return;
+    const now = this.current();
+    const isCurrent = now && list[index].id === now.track.id;
+    list.splice(index, 1);
+    this.queue.set(list);
+    if (isCurrent && list.length > 0) {
+      const nextIdx = Math.min(index, list.length - 1);
+      this.play(list[nextIdx]);
+    } else if (isCurrent) {
+      this.stop();
+    }
+  }
+
   private pickRandomDifferent(list: PlayableTrack[], currentId: string): PlayableTrack {
     if (list.length <= 1) return list[0];
     let candidate = list[0];

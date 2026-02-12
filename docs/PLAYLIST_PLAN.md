@@ -13,6 +13,7 @@ interface Playlist {
   id: string;        // e.g. 'pl-1707500000000' (generated via 'pl-' + Date.now())
   name: string;
   trackIds: string[];
+  tags?: string[];  // optional; used for filter chips on list page
 }
 ```
 
@@ -31,8 +32,10 @@ interface Playlist {
 | `create` | `(name: string): string` | Creates playlist with id `'pl-' + Date.now()`, trims name (falls back to `'Playlist'`), saves, returns id. |
 | `rename` | `(id: string, name: string): void` | Finds playlist by id, updates name (trims, keeps old name if empty), saves. |
 | `delete` | `(id: string): void` | Filters out playlist by id, saves. |
+| `duplicate` | `(playlistId: string): string` | Creates a new playlist with same name + " (copy)" and same trackIds (and tags if present); saves; returns new id. |
 | `addTrack` | `(playlistId: string, trackId: string): void` | Appends trackId if not already present, saves. |
 | `removeTrack` | `(playlistId: string, trackId: string): void` | Filters out trackId from playlist, saves. |
+| `addTag` / `removeTag` | `(playlistId: string, tag: string): void` | Add or remove a tag from playlist.tags; saves. |
 | `getPlaylist` | `(id: string): Playlist \| undefined` | Returns playlist by id from the signal. |
 | `getPlayableTracks` | `(playlistId: string): Observable<PlayableTrack[]>` | Resolves track IDs to `PlayableTrack[]` via `forkJoin` of `AudiusApiService.getTrackById()` calls. Skips tracks that fail to load. |
 
@@ -88,15 +91,17 @@ Navigation link "Playlists" is in `app.component.html` using `routerLink="/playl
 **File:** `src/app/components/playlist-list/playlist-list.component.ts`
 
 - Standalone component. Injects: `PlaylistService`, `PlayerService`, `Router`, `PlaylistModalService`.
-- Reads `playlistService.playlistsList()` to display all playlists (name, track count).
+- Reads `playlistService.playlistsList()`; displays **sorted** list (sort by name or track count via chips). Optional **tag filter** chips to show only playlists with a given tag.
 
 | Action | Implementation |
 |--------|----------------|
 | **New playlist** | `modal.openPrompt('Playlist name', 'New playlist')` then `playlistService.create(name)` then `router.navigate(['/playlists', id])`. |
 | **Play** | `playlistService.getPlayableTracks(id).subscribe(tracks => player.playQueue(tracks, 0))`. Skips if empty. |
+| **Duplicate** | `playlistService.duplicate(id)` → new id; toast "Playlist duplicated"; `router.navigate(['/playlists', newId])`. |
 | **Rename** | `modal.openPrompt('Rename playlist', playlist.name)` then `playlistService.rename(id, name)`. |
 | **Delete** | `modal.openConfirm('Delete "name"?', 'Delete')` then `playlistService.delete(id)`. |
 | **Open** | `router.navigate(['/playlists', id])`. |
+| **Sort** | Chips: "Name" / "Tracks" set `sortBy`; `sortedPlaylists` computed from `playlistsList()` and sort. |
 
 ---
 
@@ -112,6 +117,7 @@ Navigation link "Playlists" is in `app.component.html` using `routerLink="/playl
 | **Load tracks** | `forkJoin` of `audius.getTrackById(tid)` for each trackId; filters nulls; shows loading state. |
 | **Play** | `playlistService.getPlayableTracks(id)` then `player.playQueue(playables, 0)`. |
 | **Remove track** | `playlistService.removeTrack(playlistId, trackId)`; refreshes local playlist and track list signals. |
+| **Reorder** | Drag-and-drop (CDK DragDrop); `playlistService.moveTrack(playlistId, previousIndex, currentIndex)`. |
 | **Rename** | `modal.openPrompt('Rename playlist', name)` then `playlistService.rename(id, name)`; updates local signal. |
 | **Delete** | `modal.openConfirm(...)` then `playlistService.delete(id)` then `router.navigate(['/playlists'])`. |
 | **Back** | `router.navigate(['/playlists'])`. |

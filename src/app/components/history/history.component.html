@@ -10,8 +10,14 @@
   @if (historyService.historyList().length === 0) {
     <p class="empty">{{ strings.EMPTY.HISTORY }}</p>
   } @else {
+    <div class="sort-row">
+      <span class="sort-label">{{ strings.LABEL.SORT }}</span>
+      <button type="button" class="sort-chip" [class.active]="sortBy() === 'date'" (click)="setSortBy('date')">{{ strings.SORT.DATE }}</button>
+      <button type="button" class="sort-chip" [class.active]="sortBy() === 'title'" (click)="setSortBy('title')">{{ strings.SORT.TITLE }}</button>
+      <button type="button" class="sort-chip" [class.active]="sortBy() === 'artist'" (click)="setSortBy('artist')">{{ strings.SORT.ARTIST }}</button>
+    </div>
     <ul class="track-list">
-      @for (entry of historyService.historyList(); track entry.track.id) {
+      @for (entry of sortedHistory(); track entry.playedAt) {
         <li class="track-item" (click)="playTrack(entry)" role="button" tabindex="0" (keydown.enter)="playTrack(entry)">
           <div class="track-info">
             <span class="track-title">{{ entry.track.title }}</span>
@@ -21,6 +27,7 @@
           </div>
           <span class="track-duration">{{ formatDuration(entry.track.duration) }}</span>
           <span class="track-date">{{ formatDate(entry.playedAt) }}</span>
+          <button type="button" class="track-remove-btn" (click)="removeEntry(entry); $event.stopPropagation()" [attr.aria-label]="strings.BTN.REMOVE_FROM_HISTORY" [attr.title]="strings.BTN.REMOVE_FROM_HISTORY">×</button>
         </li>
       }
     </ul>

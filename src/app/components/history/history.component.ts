@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { HistoryService, type HistoryEntry } from '../../services/history.service';
-import { PlayerService, type PlayableTrack } from '../../services/player.service';
+import { PlayerService } from '../../services/player.service';
 import { formatDuration } from '../../services/utils/format.helpers';
-import { PAGE, BTN, EMPTY } from '../../constants/ui-strings';
+import { PAGE, BTN, EMPTY, LABEL, SORT } from '../../constants/ui-strings';
 
 @Component({
   selector: 'app-history',
@@ -13,7 +13,17 @@ import { PAGE, BTN, EMPTY } from '../../constants/ui-strings';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HistoryComponent {
-  readonly strings = { PAGE, BTN, EMPTY };
+  readonly strings = { PAGE, BTN, EMPTY, LABEL, SORT };
+  sortBy = signal<'date' | 'title' | 'artist'>('date');
+
+  sortedHistory = computed(() => {
+    const list = [...this.historyService.historyList()];
+    const by = this.sortBy();
+    if (by === 'date') list.sort((a, b) => b.playedAt - a.playedAt);
+    else if (by === 'title') list.sort((a, b) => (a.track.title ?? '').localeCompare(b.track.title ?? '', undefined, { sensitivity: 'base' }));
+    else list.sort((a, b) => (a.track.artist ?? '').localeCompare(b.track.artist ?? '', undefined, { sensitivity: 'base' }));
+    return list;
+  });
 
   constructor(
     public historyService: HistoryService,
@@ -27,6 +37,14 @@ export class HistoryComponent {
 
   clearHistory(): void {
     this.historyService.clearHistory();
+  }
+
+  removeEntry(entry: HistoryEntry): void {
+    this.historyService.removeEntry(entry);
+  }
+
+  setSortBy(value: 'date' | 'title' | 'artist'): void {
+    this.sortBy.set(value);
   }
 
   formatDuration = formatDuration;

@@ -44,8 +44,9 @@ A browser-based music player built with Angular that streams free, royalty-free 
 - Persistent player bar at the bottom of the screen when a track is playing.
 - Displays cover art, track title, and artist name.
 - Play / Pause, Previous, Next controls.
-- Seekbar with current time and total duration.
-- Playback speed selector (e.g. 1×, 1.25×, 1.5×, 2×) for fine‑grained control.
+- Seekbar with current time and total duration; **seek back / forward 10 s** buttons.
+- Playback speed selector (e.g. 0.5×, 1×, 1.5×, 2×) for fine‑grained control.
+- **Volume and playback speed** persist across sessions.
 
 ### 2.2 Queue
 
@@ -54,6 +55,7 @@ A browser-based music player built with Angular that streams free, royalty-free 
 - Click any track in the queue to jump to it.
 - Total queue duration displayed at the bottom.
 - Clear queue button to stop playback and reset the queue.
+- **Remove a single track** from the queue (per‑track remove button).
 - Add any queued track to an existing playlist or create a new playlist directly from the queue.
 
 ### 2.3 Shuffle & Loop
@@ -112,6 +114,8 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
 
 - Create playlists with custom names.
 - Rename or delete playlists via modal dialogs.
+- **Duplicate playlist** to create a copy (name + " (copy)").
+- **Sort playlists** by name or track count (chips above the list).
 - View track count per playlist in the list view.
 - Color‑coded tags per playlist with a preset tag palette.
 - Tag filter chips above the list to quickly filter playlists by tag.
@@ -152,7 +156,9 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
 
 - Automatically records the last 50 played tracks with timestamps.
 - View history on the History page.
+- **Sort history** by date, title, or artist (chips above the list).
 - Click any entry to replay the track.
+- **Remove a single entry** from history (per‑row remove button).
 - Clear history with one click.
 - Persists across sessions.
 
@@ -204,13 +210,17 @@ All user data is stored in the browser's `localStorage`:
 | `music-player-history` | Last 50 played tracks with timestamps |
 | `free-music-recent-searches` | Last 5 search queries |
 | `crossfade-duration` | Crossfade setting (0–12 seconds) |
+| `music-player-volume` | Volume level (0–1) |
+| `music-player-muted` | Mute state (optional) |
+| `music-player-playback-speed` | Playback speed (e.g. 1.25) |
 
 ### Notifications
 
 - Non‑blocking toast notifications for key actions:
   - Playlist create / rename / delete / import / export.
   - Add / remove from favorites and playlists.
-  - Clear queue, clear history.
+  - Clear queue, clear history; **removed from queue**, **removed from history**.
+  - **Playlist duplicated.**
   - Sleep timer set / ended / cancelled.
   - Share link copy success / failure.
 
@@ -229,6 +239,11 @@ All user data is stored in the browser's `localStorage`:
 ### UI Strings
 
 All user-facing text (labels, buttons, empty states, toasts, errors) is centralized in `src/app/constants/ui-strings.ts` for consistency and easier updates or localization.
+
+### Accessibility
+
+- **Live region** announces "Now playing: Title by Artist" when the track changes (screen readers).
+- **Reduced motion:** `prefers-reduced-motion: reduce` is respected (animations and transitions minimized).
 
 ### Browser Support
 

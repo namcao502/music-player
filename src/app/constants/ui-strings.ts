@@ -81,6 +81,11 @@ export const BTN = {
   EXPAND_PLAYER: 'Expand player',
   CROSSFADE_DURATION: 'Crossfade duration',
   SLEEP_TIMER_CANCEL: 'Cancel',
+  SEEK_BACK: 'Seek back 10 s',
+  SEEK_FORWARD: 'Seek forward 10 s',
+  REMOVE_FROM_QUEUE: 'Remove from queue',
+  REMOVE_FROM_HISTORY: 'Remove from history',
+  DUPLICATE: 'Duplicate',
 } as const;
 
 // ── Empty states ────────────────────────────────────────────────────────
@@ -136,6 +141,7 @@ export const TOAST = {
 
   // Queue
   QUEUE_CLEARED: 'Queue cleared',
+  REMOVED_FROM_QUEUE: 'Removed from queue',
 
   // Sleep Timer
   SLEEP_TIMER_SET: (minutes: number) => `Sleep timer set for ${minutes} min`,
@@ -144,7 +150,11 @@ export const TOAST = {
 
   // History
   HISTORY_CLEARED: 'History cleared',
+  REMOVED_FROM_HISTORY: 'Removed from history',
   HISTORY_SAVE_FAILED: 'Failed to save history. Storage may be full.',
+
+  // Playlist duplicate
+  PLAYLIST_DUPLICATED: (name: string) => `Playlist "${name}" duplicated`,
 
   // Share
   TRACK_LINK_COPIED: 'Track link copied to clipboard!',
@@ -182,6 +192,10 @@ export const SORT = {
   DURATION_ASC: 'Duration (short first)',
   DURATION_DESC: 'Duration (long first)',
   ARTIST: 'Artist name',
+  DATE: 'Date',
+  TITLE: 'Title',
+  NAME: 'Name',
+  TRACK_COUNT: 'Track count',
 } as const;
 
 // ── Sleep timer options ─────────────────────────────────────────────────

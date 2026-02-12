@@ -12,16 +12,18 @@ This document defines the test plan and test cases per module for the Music Play
 |--------|------|-----------|--------|
 | **ThemeService** | Service | `services/theme.service.spec.ts` | Tested (T1–T5) |
 | **AudiusApiService** | Service | `services/audius-api.service.spec.ts` | Tested (A1–A6) |
-| **PlayerService** | Service | `services/player.service.spec.ts` | Tested (P1–P12) |
+| **PlayerService** | Service | `services/player.service.spec.ts` | Tested (P1–P12+) |
 | **AppComponent** | Component | `app.component.spec.ts` | Tested (R1–R7) |
 | **FreeMusicComponent** | Component | `components/free-music/free-music.component.spec.ts` | Tested (F1–F20) |
 | **PlayerBarComponent** | Component | `components/player-bar/player-bar.component.spec.ts` | Tested (B1–B10) |
-| **PlaylistService** | Service | `services/playlist.service.spec.ts` | Tested (PL1–PL13) |
-| **PlaylistListComponent** | Component | `components/playlist-list/playlist-list.component.spec.ts` | Tested (LL1–LL9) |
+| **PlaylistService** | Service | `services/playlist.service.spec.ts` | Tested (PL1–PL13+) |
+| **PlaylistListComponent** | Component | `components/playlist-list/playlist-list.component.spec.ts` | Tested (LL1–LL9+) |
 | **PlaylistDetailComponent** | Component | `components/playlist-detail/playlist-detail.component.spec.ts` | Tested (PD1–PD9) |
 | **PlaylistModalService** | Service | `services/playlist-modal.service.spec.ts` | Tested (PM1–PM5) |
 | **PlaylistModalComponent** | Component | `components/playlist-modal/playlist-modal.component.spec.ts` | Tested (MC1–MC5) |
 | **FreeMusicStateService** | Service | — | Not tested (trivial signal holder) |
+| **HistoryService** | Service | `services/history.service.spec.ts` | Tested |
+| **HistoryComponent** | Component | `components/history/history.component.spec.ts` | Tested |
 
 ---
 
@@ -85,6 +87,7 @@ This document defines the test plan and test cases per module for the Music Play
 | P11 | `toggleShuffle()` flips `shuffleEnabled` | false -> true. |
 | P12 | `cycleLoopMode()` cycles off -> all -> one -> off | Asserts all 4 transitions. |
 | P10 | `registerPlaybackTrigger` callback called on play | `play(track, url)` -> trigger called with `(url, track.id)`. |
+| P13 | `removeFromQueue(index)` removes item, adjusts nowPlaying if needed | Queue [a,b,c] at index 1; removeFromQueue(2) -> queue [a,b]; removeFromQueue(1) when current is b -> nowPlaying advances or stops. |
 
 ### 3.4 AppComponent
 
@@ -156,6 +159,7 @@ This document defines the test plan and test cases per module for the Music Play
 | PL11 | `getPlaylist(id)` returns correct playlist | Found -> playlist; not found -> undefined. |
 | PL12 | `getPlayableTracks` resolves via API | `forkJoin` of `getTrackById` -> `PlayableTrack[]`. Null tracks skipped. |
 | PL13 | `getPlayableTracks` for empty playlist returns `[]` | No API calls made. |
+| PL14 | `duplicate(playlistId)` creates copy with " (copy)" suffix, returns new id | New playlist in list; same trackIds; name ends with " (copy)". |
 
 ### 3.8 PlaylistListComponent 
 | ID | Description | Assertions |
@@ -169,6 +173,8 @@ This document defines the test plan and test cases per module for the Music Play
 | LL7 | `delete` opens confirm, calls service | `delete` called after confirmation. |
 | LL8 | `delete` cancelled does nothing | `delete` not called. |
 | LL9 | `open(id)` navigates to detail | `navigate(['/playlists', id])`. |
+| LL10 | `duplicatePlaylist(id)` calls service.duplicate, shows toast, navigates to new playlist | `duplicate` called; navigate to new id. |
+| LL11 | Sort chips (name / track count) update sortedPlaylists | `sortBy` signal; computed order. |
 
 ### 3.9 PlaylistDetailComponent 
 | ID | Description | Assertions |
@@ -218,4 +224,4 @@ For a single run (no watch) with headless Chrome:
 npx ng test --no-watch --browsers=ChromeHeadless
 ```
 
-**Current status:** 127 tests, all passing. All modules are tested except `FreeMusicStateService` (trivial signal holder).
+**Current status:** Run `npm test` for count; all tests passing. Covered: ThemeService, AudiusApiService, PlayerService (incl. removeFromQueue), AppComponent, FreeMusicComponent, PlayerBarComponent (incl. seek, volume/speed, queue remove), PlaylistService (incl. duplicate, tags), PlaylistListComponent (incl. duplicate, sort), PlaylistDetailComponent, PlaylistModalService/Component, HistoryService, HistoryComponent (incl. sort, removeEntry). FreeMusicStateService not tested (trivial signal holder).

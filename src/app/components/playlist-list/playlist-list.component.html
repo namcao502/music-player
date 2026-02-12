@@ -25,13 +25,21 @@
     </div>
   }
 
+  @if (playlistService.playlistsList().length > 0 && filteredPlaylists().length > 0) {
+    <div class="sort-row">
+      <span class="sort-label">{{ strings.LABEL.SORT }}</span>
+      <button type="button" class="sort-chip" [class.active]="sortBy() === 'name'" (click)="setSortBy('name')">{{ strings.SORT.NAME }}</button>
+      <button type="button" class="sort-chip" [class.active]="sortBy() === 'count'" (click)="setSortBy('count')">{{ strings.SORT.TRACK_COUNT }}</button>
+    </div>
+  }
+
   @if (playlistService.playlistsList().length === 0) {
     <p class="empty">{{ strings.EMPTY.PLAYLISTS }}</p>
   } @else if (filteredPlaylists().length === 0) {
     <p class="empty">{{ strings.EMPTY.PLAYLISTS_TAG_FILTER }}</p>
   } @else {
     <ul class="list">
-      @for (p of filteredPlaylists(); track p.id) {
+      @for (p of sortedPlaylists(); track p.id) {
         <li class="list-item">
           <button type="button" class="item-main" (click)="open(p.id)">
             <span class="item-name">{{ p.name }}</span>
@@ -71,6 +79,7 @@
                 </div>
               }
             </div>
+            <button type="button" class="btn-icon" (click)="duplicatePlaylist(p.id, $event)" [attr.title]="strings.BTN.DUPLICATE" [attr.aria-label]="strings.BTN.DUPLICATE">⎘</button>
             <button type="button" class="btn-icon" (click)="rename(p); $event.stopPropagation()" [attr.title]="strings.BTN.RENAME" [attr.aria-label]="strings.BTN.RENAME">✎</button>
             <button type="button" class="btn-icon" (click)="delete(p.id, p.name); $event.stopPropagation()" [attr.title]="strings.BTN.DELETE" [attr.aria-label]="strings.BTN.DELETE">×</button>
           </div>

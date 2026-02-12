@@ -5,7 +5,7 @@ import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
 import { PlayerService } from '../../services/player.service';
 import { DEFAULT_TAG_COLORS } from '../../models/playlist.model';
-import { PAGE, BTN, EMPTY, LABEL, SECTION, ERROR, CONFIRM, PLURAL } from '../../constants/ui-strings';
+import { PAGE, BTN, EMPTY, LABEL, SECTION, ERROR, CONFIRM, PLURAL, SORT } from '../../constants/ui-strings';
 
 @Component({
   selector: 'app-playlist-list',
@@ -16,9 +16,10 @@ import { PAGE, BTN, EMPTY, LABEL, SECTION, ERROR, CONFIRM, PLURAL } from '../../
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistListComponent {
-  readonly strings = { PAGE, BTN, EMPTY, LABEL, SECTION, PLURAL };
+  readonly strings = { PAGE, BTN, EMPTY, LABEL, SECTION, PLURAL, SORT };
   private destroyRef = inject(DestroyRef);
   importError = signal('');
+  sortBy = signal<'name' | 'count'>('name');
 
   // F8: Playlist Tags
   readonly presetTags = Object.keys(DEFAULT_TAG_COLORS);
@@ -36,6 +37,14 @@ export class PlaylistListComponent {
     const list = this.playlistService.playlistsList();
     if (!tag) return list;
     return list.filter((p) => (p.tags ?? []).includes(tag));
+  });
+
+  sortedPlaylists = computed(() => {
+    const list = [...this.filteredPlaylists()];
+    const by = this.sortBy();
+    if (by === 'name') list.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    else list.sort((a, b) => b.trackIds.length - a.trackIds.length);
+    return list;
   });
 
   constructor(
@@ -72,6 +81,16 @@ export class PlaylistListComponent {
 
   open(id: string): void {
     this.router.navigate(['/playlists', id]);
+  }
+
+  duplicatePlaylist(playlistId: string, e: Event): void {
+    e.stopPropagation();
+    const newId = this.playlistService.duplicate(playlistId);
+    if (newId) this.router.navigate(['/playlists', newId]);
+  }
+
+  setSortBy(value: 'name' | 'count'): void {
+    this.sortBy.set(value);
   }
 
   // F8: Tag management

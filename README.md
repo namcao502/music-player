@@ -43,17 +43,17 @@ npm test
 
 ### Playback
 
-- **Player bar** at the bottom with cover art, title, artist, play/pause, previous/next, and seekbar.
-- **Queue** — click a track to play; the full page becomes the queue. Open "Up Next" panel to manage.
+- **Player bar** at the bottom with cover art, title, artist, play/pause, previous/next, **seek ±10 s** buttons, and seekbar.
+- **Queue** — click a track to play; the full page becomes the queue. Open "Up Next" panel to **remove** tracks or add to playlist.
 - **Shuffle** and **Loop** (off / loop all / loop one).
-- **Volume control** with dynamic speaker icon.
+- **Volume** and **playback speed** — persisted across sessions; dynamic speaker icon.
 - **Crossfade** — smooth fade between tracks (0–12 seconds, configurable in queue panel).
 - **Keyboard shortcuts** — Space (play/pause), Left/Right arrows (previous/next); media keys when available.
-- **Playback speed**, **sleep timer**, **share track link**; optional **audio visualizer** and **mini player** (desktop).
+- **Sleep timer**, **share track link**; optional **audio visualizer** and **mini player** (desktop).
 
 ### Playlists
 
-- Create, rename, and delete playlists; **tags** with filter chips.
+- Create, rename, **duplicate**, and delete playlists; **tags** with filter chips; **sort** by name or track count.
 - Add tracks from search results, trending, or the queue panel.
 - Reorder tracks with drag-and-drop in playlist detail.
 - **Export** playlists as JSON files; **import** from JSON.
@@ -66,12 +66,17 @@ npm test
 ### Play History
 
 - Automatically records the last 50 played tracks with timestamps.
-- Replay any track from the **History page**; clear with one click.
+- **History page**: **sort** by date, title, or artist; replay any track; **remove** single entry or clear all.
 
 ### Theming
 
 - Dark mode (default) and Light mode, toggled via the sun/moon button.
 - Respects OS preference on first visit; persists across sessions.
+
+### Accessibility
+
+- **Live region** announces "Now playing: Title by Artist" for screen readers.
+- **Reduced motion** — `prefers-reduced-motion: reduce` disables non-essential animations.
 
 ### Responsive & PWA
 
@@ -146,4 +151,7 @@ All user data is stored in the browser's `localStorage`:
 | `music-player-favorites` | Favorite track IDs |
 | `music-player-history` | Last 50 played tracks |
 | `free-music-recent-searches` | Last 5 search queries |
+| `music-player-volume` | Volume (0–1) |
+| `music-player-muted` | Mute state |
+| `music-player-playback-speed` | Playback speed (e.g. 1) |
 | `crossfade-duration` | Crossfade setting (0–12s) |

@@ -45,6 +45,12 @@ export class HistoryService {
     this.notification.success(TOAST.HISTORY_CLEARED);
   }
 
+  removeEntry(entry: HistoryEntry): void {
+    this.history.update((list) => list.filter((e) => !(e.track.id === entry.track.id && e.playedAt === entry.playedAt)));
+    this.saveToStorage();
+    this.notification.success(TOAST.REMOVED_FROM_HISTORY);
+  }
+
   private loadFromStorage(): HistoryEntry[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);

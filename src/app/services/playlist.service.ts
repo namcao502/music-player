@@ -75,6 +75,18 @@ export class PlaylistService {
     this.notification.success(p ? TOAST.PLAYLIST_DELETED(p.name) : TOAST.PLAYLIST_DELETED_GENERIC);
   }
 
+  duplicate(playlistId: string): string {
+    const src = this.getPlaylist(playlistId);
+    if (!src) return '';
+    const id = 'pl-' + Date.now();
+    const name = (src.name.trim() || 'Playlist') + ' (copy)';
+    const copy = { id, name, trackIds: [...src.trackIds], tags: src.tags ? [...src.tags] : undefined };
+    this.playlists.update((list) => [...list, copy]);
+    this.saveToStorage();
+    this.notification.success(TOAST.PLAYLIST_DUPLICATED(name));
+    return id;
+  }
+
   addTrack(playlistId: string, trackId: string): void {
     const playlist = this.getPlaylist(playlistId);
     if (playlist?.trackIds.includes(trackId)) {

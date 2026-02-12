@@ -88,7 +88,7 @@ Player bar: timeupdate -> currentTime; play -> setPlaying(true);
   pause -> setPlaying(false); ended -> PlayerService.handleEnded()
 ```
 
-**Seek:** User drags progress bar -> `onSeekInput(value)` (visual update) -> `onSeekChange(value)` -> `audio.currentTime = value`.
+**Seek:** User drags progress bar -> `onSeekInput(value)` (visual update) -> `onSeekChange(value)` -> `audio.currentTime = value`. **Seek ±10 s:** Buttons call `seekRelative(-10)` / `seekRelative(10)` -> clamp and set `audio.currentTime`.
 
 **Play/Pause button:** **PlayerService.togglePlayPause()** -> effect runs -> `audio.play()` or `audio.pause()`.
 
@@ -122,12 +122,12 @@ Player bar: timeupdate -> currentTime; play -> setPlaying(true);
 
 | Service | Role |
 |---------|------|
-| **PlayerService** | Now playing (track + streamUrl), playing state, queue. `play()`, `playQueue()`, `togglePlayPause()`, `next()`, `previous()`, `setPlaying()`, `pause()`, `stop()`, `handleEnded()`, `toggleShuffle()`, `cycleLoopMode()`, `clearQueue()`, `registerPlaybackTrigger()`. |
+| **PlayerService** | Now playing (track + streamUrl), playing state, queue. `play()`, `playQueue()`, `togglePlayPause()`, `next()`, `previous()`, `setPlaying()`, `pause()`, `stop()`, `handleEnded()`, `toggleShuffle()`, `cycleLoopMode()`, `clearQueue()`, `removeFromQueue(index)`, `registerPlaybackTrigger()`. Crossfade duration persisted in `localStorage`. |
 | **AudiusApiService** | Audius API: `searchTracks()`, `getTrackById()`, `getStreamEndpointUrl()`, `getStreamUrl()`, `getArtworkUrl()`. No auth; uses `app_name` param. Base URL from `environment.audiusApiUrl`. |
 | **ThemeService** | Light/dark theme; persists to localStorage (`music-player-theme`); applies `.theme-light` / `.theme-dark` on `document.documentElement`. |
-| **PlaylistService** | Playlists CRUD (localStorage under `music-player-playlists`); `addTrack`, `removeTrack`, `moveTrack`; `getPlayableTracks(playlistId)` resolves IDs to `PlayableTrack[]`; `exportPlaylist`, `importPlaylist`. |
+| **PlaylistService** | Playlists CRUD (localStorage under `music-player-playlists`); `addTrack`, `removeTrack`, `moveTrack`, `duplicate(playlistId)`; tags (addTag, removeTag); `getPlayableTracks(playlistId)`; `exportPlaylist`, `importPlaylist`. |
 | **FavoritesService** | Favorite track IDs (localStorage under `music-player-favorites`). `isFavorite()`, `toggle()`, `add()`, `remove()`. |
-| **HistoryService** | Last 50 played tracks with timestamps (localStorage under `music-player-history`). Auto-records on `nowPlaying` change. `clearHistory()`. |
+| **HistoryService** | Last 50 played tracks with timestamps (localStorage under `music-player-history`). Auto-records on `nowPlaying` change. `clearHistory()`, `removeEntry(entry)`. |
 | **FreeMusicStateService** | In-memory signals: query, tracks, page, hasNextPage, brokenCoverIds. Restores Free Music state when returning from other tabs. |
 | **PlaylistModalService** | `openPrompt(title, initialValue)`, `openConfirm(message, confirmLabel)`; promise-based. Drives `PlaylistModalComponent`. |
 
@@ -141,12 +141,12 @@ Player bar: timeupdate -> currentTime; play -> setPlaying(true);
 | **FreeMusicComponent** | Search, recent searches (up to 5), searchTracks with pagination (PAGE_SIZE=24); state sync to FreeMusicStateService; results grid with custom sort dropdown; track click -> play/toggle; add-to-playlist dropdown; favorites toggle. |
 | **TrendingComponent** | Top 50 trending tracks from Audius. Artist links, favorites toggle. |
 | **ArtistComponent** | Artist page (name, handle, tracks). Play all, favorites toggle. Route param `:id`. |
-| **PlaylistListComponent** | List playlists; New playlist (via modal), Play, Rename, Delete, Import; navigate to detail. |
-| **PlaylistDetailComponent** | Playlist tracks (resolved via `getTrackById` with `forkJoin`); Play, Remove track, Reorder (move up/down), Rename, Delete, Export, Back. |
+| **PlaylistListComponent** | List playlists; sort by name or track count; New playlist (via modal), Play, Duplicate, Rename, Delete, Import; tag filter chips; navigate to detail. |
+| **PlaylistDetailComponent** | Playlist tracks (resolved via `getTrackById` with `forkJoin`); Play, Remove track, Reorder (drag-and-drop), Rename, Delete, Export, Back. |
 | **FavoritesComponent** | Lists all favorited tracks (fetched from Audius). Play all, play single, remove favorite. |
-| **HistoryComponent** | Last 50 played tracks with timestamps. Replay any entry, clear history. |
+| **HistoryComponent** | Last 50 played tracks with timestamps. Sort by date/title/artist; replay any entry, remove single entry, clear history. |
 | **PlaylistModalComponent** | Renders prompt or confirm modal driven by `PlaylistModalService`. Enter=submit, Escape=cancel, backdrop click=cancel. |
-| **PlayerBarComponent** | Audio element, cover/title/artist, shuffle toggle, prev/play-pause/next, loop toggle, progress bar (seek), volume slider, crossfade slider, queue panel (with add-to-playlist per item). Manages audio listeners, suppression window, autoplay retry, crossfade. |
+| **PlayerBarComponent** | Audio element, cover/title/artist, shuffle/loop, prev/play-pause/next, **seek ±10 s** buttons, progress bar (seek), **volume and playback speed** (persisted), crossfade, queue panel (per-item **remove** and add-to-playlist). **Live region** for "Now playing" (screen readers). Manages audio listeners, suppression window, autoplay retry, crossfade. |
 
 ---
 
@@ -172,8 +172,8 @@ Artist:
   Play all -> playQueue(all tracks, 0)
 
 Playlists:
-  List: PlaylistService.playlistsList() -> create/rename/delete (all via modal); play -> getPlayableTracks(id) -> playQueue; import JSON file
-  Detail: getPlaylist(id), forkJoin(getTrackById for each trackId) -> play / removeTrack / reorder / rename / delete / export JSON
+  List: PlaylistService.playlistsList() -> filtered by tag, sorted (name or track count); create/rename/delete/duplicate (modal where needed); play -> getPlayableTracks(id) -> playQueue; import JSON file
+  Detail: getPlaylist(id), forkJoin(getTrackById for each trackId) -> play / removeTrack / drag-drop reorder / rename / delete / export JSON
 
 Favorites:
   OnInit -> FavoritesService.favoriteIds() -> forkJoin(getTrackById for each id) -> track list
@@ -181,7 +181,7 @@ Favorites:
 
 History:
   HistoryService effect: watches nowPlaying() -> auto-adds entry (dedupes, max 50, persists to localStorage)
-  History page: click entry -> player.play(track); clear -> historyService.clearHistory()
+  History page: sort by date/title/artist (sortedHistory computed); click entry -> player.play(track); remove entry -> removeEntry(entry); clear -> historyService.clearHistory()
 
 Player bar:
   nowPlaying + isPlaying (signals) -> playbackTrigger + effect -> audio.src, audio.play()/pause()
@@ -191,8 +191,9 @@ Player bar:
   Loop: off (stop at end) / all (wrap) / one (repeat current)
   Crossfade: checkCrossfade() on timeupdate -> gradual volume fade -> handleEnded() at end
   Volume: slider 0-1 -> audio.volume
-  Queue panel: add-to-playlist per item (PlaylistService.addTrack or create new via modal)
+  Queue panel: remove-from-queue per item (removeFromQueue(index)), add-to-playlist per item (PlaylistService.addTrack or create new via modal)
   Clear queue: pause audio, clearCrossfade, clearQueue, stop
+  Volume/playback speed: read from localStorage on init (music-player-volume, music-player-playback-speed); saved on change
 ```
 
 ---
@@ -229,5 +230,5 @@ interface AudiusTrack {
 }
 
 // Playlist (models/playlist.model.ts)
-interface Playlist { id: string; name: string; trackIds: string[]; }
+interface Playlist { id: string; name: string; trackIds: string[]; tags?: string[]; }
 ```
