@@ -9,7 +9,8 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { formatDuration } from '../../services/utils/format.helpers';
 import { buildPlayableQueue, getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
-import { PAGE, BTN, LOADING, EMPTY, ERROR, LABEL_FAVORITES } from '../../constants/ui-strings';
+import { NotificationService } from '../../services/utils/notification.service';
+import { PAGE, BTN, LOADING, EMPTY, ERROR, LABEL_FAVORITES, TOAST } from '../../constants/ui-strings';
 
 @Component({
   selector: 'app-artist',
@@ -33,7 +34,8 @@ export class ArtistComponent implements OnInit {
     private router: Router,
     private audius: AudiusApiService,
     private player: PlayerService,
-    public favoritesService: FavoritesService
+    public favoritesService: FavoritesService,
+    private notification: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -107,6 +109,13 @@ export class ArtistComponent implements OnInit {
 
   artworkUrl(track: AudiusTrack): string {
     return getPreferredArtworkUrl(this.audius, track);
+  }
+
+  addToQueue(track: AudiusTrack, e: Event): void {
+    e.stopPropagation();
+    const playable = buildPlayableQueue(this.audius, [track])[0];
+    this.player.addToQueue(playable);
+    this.notification.success(TOAST.ADDED_TO_QUEUE);
   }
 
   formatDuration = formatDuration;

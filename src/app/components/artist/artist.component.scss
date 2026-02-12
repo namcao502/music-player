@@ -130,6 +130,24 @@
   flex-shrink: 0;
 }
 
+.queue-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  flex-shrink: 0;
+
+  .icon-queue { width: 0.875rem; height: 0.875rem; }
+  &:hover { color: var(--spotify-green); }
+}
+
 .fav-btn {
   width: 32px;
   height: 32px;

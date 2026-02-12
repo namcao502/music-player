@@ -9,13 +9,16 @@ export interface HistoryEntry {
 }
 
 const STORAGE_KEY = 'music-player-history';
+const PLAY_COUNTS_KEY = 'music-player-play-counts';
 const MAX_HISTORY = 50;
 
 @Injectable({ providedIn: 'root' })
 export class HistoryService {
   private history = signal<HistoryEntry[]>(this.loadFromStorage());
+  private playCounts = signal<Record<string, number>>(this.loadPlayCounts());
 
   historyList = this.history.asReadonly();
+  playCountMap = this.playCounts.asReadonly();
 
   constructor(private player: PlayerService, private notification: NotificationService) {
     effect(() => {
@@ -31,6 +34,8 @@ export class HistoryService {
   }
 
   private addEntry(track: PlayableTrack): void {
+    this.playCounts.update((counts) => ({ ...counts, [track.id]: (counts[track.id] ?? 0) + 1 }));
+    this.savePlayCounts();
     this.history.update((list) => {
       const filtered = list.filter((e) => e.track.id !== track.id);
       const next = [{ track, playedAt: Date.now() }, ...filtered].slice(0, MAX_HISTORY);
@@ -41,7 +46,9 @@ export class HistoryService {
 
   clearHistory(): void {
     this.history.set([]);
+    this.playCounts.set({});
     this.saveToStorage();
+    this.savePlayCounts();
     this.notification.success(TOAST.HISTORY_CLEARED);
   }
 
@@ -70,6 +77,27 @@ export class HistoryService {
     } catch (error) {
       console.error('Failed to save history to localStorage:', error);
       this.notification.error(TOAST.HISTORY_SAVE_FAILED);
+    }
+  }
+
+  private loadPlayCounts(): Record<string, number> {
+    try {
+      const raw = localStorage.getItem(PLAY_COUNTS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return {};
+  }
+
+  private savePlayCounts(): void {
+    try {
+      localStorage.setItem(PLAY_COUNTS_KEY, JSON.stringify(this.playCounts()));
+    } catch {
+      // non-critical, silently ignore
     }
   }
 }

@@ -15,37 +15,59 @@
   } @else if (tracks().length === 0) {
     <p class="empty">{{ strings.EMPTY.FAVORITES }}</p>
   } @else {
-    <ul class="track-list">
-      @for (track of tracks(); track track.id; let i = $index) {
-        <li class="track-item" (click)="onTrackClick(track)" role="button" tabindex="0" (keydown.enter)="onTrackClick(track)">
-          <span class="track-index">{{ i + 1 }}</span>
-          <div class="track-cover">
-            @if (brokenCoverIds().has(track.id)) {
-              <span class="cover-fallback">♪</span>
-            } @else {
-              <img [src]="artworkUrl(track)" [alt]="track.title" (error)="onCoverError(track.id)" />
-            }
-          </div>
-          <div class="track-info">
-            <span class="track-title">{{ track.title }}</span>
-            @if (track.user?.name) {
-              <span class="track-artist">{{ track.user?.name }}</span>
-            }
-          </div>
-          <span class="track-duration">{{ formatDuration(track.duration) }}</span>
-          <button
-            type="button"
-            class="remove-btn"
-            (click)="removeFavorite(track.id, $event)"
-            [attr.aria-label]="strings.LABEL_FAVORITES.REMOVE"
-            [attr.title]="strings.LABEL_FAVORITES.REMOVE"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-heart">
-              <path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </button>
-        </li>
-      }
-    </ul>
+    <div class="filter-row">
+      <input
+        type="text"
+        class="filter-input"
+        [placeholder]="strings.PLACEHOLDER.FILTER_TRACKS"
+        [ngModel]="filterText()"
+        (ngModelChange)="filterText.set($event)"
+      />
+    </div>
+    @if (filteredTracks().length === 0) {
+      <p class="empty">{{ strings.EMPTY.FILTER_NO_RESULTS }}</p>
+    } @else {
+      <ul class="track-list">
+        @for (track of filteredTracks(); track track.id; let i = $index) {
+          <li class="track-item" (click)="onTrackClick(track)" role="button" tabindex="0" (keydown.enter)="onTrackClick(track)">
+            <span class="track-index">{{ i + 1 }}</span>
+            <div class="track-cover">
+              @if (brokenCoverIds().has(track.id)) {
+                <span class="cover-fallback">♪</span>
+              } @else {
+                <img [src]="artworkUrl(track)" [alt]="track.title" (error)="onCoverError(track.id)" />
+              }
+            </div>
+            <div class="track-info">
+              <span class="track-title">{{ track.title }}</span>
+              @if (track.user?.name) {
+                <span class="track-artist">{{ track.user?.name }}</span>
+              }
+            </div>
+            <span class="track-duration">{{ formatDuration(track.duration) }}</span>
+            <button
+              type="button"
+              class="queue-btn"
+              (click)="addToQueue(track, $event)"
+              [attr.aria-label]="strings.BTN.ADD_TO_QUEUE"
+              [attr.title]="strings.BTN.ADD_TO_QUEUE"
+            >
+              <svg class="icon-queue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <button
+              type="button"
+              class="remove-btn"
+              (click)="removeFavorite(track.id, $event)"
+              [attr.aria-label]="strings.LABEL_FAVORITES.REMOVE"
+              [attr.title]="strings.LABEL_FAVORITES.REMOVE"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-heart">
+                <path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </button>
+          </li>
+        }
+      </ul>
+    }
   }
 </div>

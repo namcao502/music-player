@@ -1,0 +1,64 @@
+<div class="stats-page">
+  <header class="header">
+    <h1>{{ strings.PAGE.STATS_TITLE }}</h1>
+    <p class="subtitle">{{ strings.PAGE.STATS_SUBTITLE }}</p>
+  </header>
+
+  @if (!hasData()) {
+    <p class="empty">{{ strings.EMPTY.STATS }}</p>
+  } @else {
+    <div class="stat-cards">
+      <div class="stat-card">
+        <span class="stat-value">{{ totalPlays() }}</span>
+        <span class="stat-label">{{ strings.STATS.TOTAL_TRACKS_PLAYED }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ uniqueTracks() }}</span>
+        <span class="stat-label">{{ strings.STATS.UNIQUE_TRACKS }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ uniqueArtists() }}</span>
+        <span class="stat-label">{{ strings.STATS.UNIQUE_ARTISTS }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ totalListeningTime() }}</span>
+        <span class="stat-label">{{ strings.STATS.TOTAL_LISTENING_TIME }}</span>
+      </div>
+    </div>
+
+    @if (topTracks().length > 0) {
+      <section class="top-section">
+        <h2>{{ strings.STATS.TOP_TRACKS }}</h2>
+        <ol class="top-list">
+          @for (item of topTracks(); track item.title; let i = $index) {
+            <li class="top-item">
+              <span class="rank">{{ i + 1 }}</span>
+              <div class="top-info">
+                <span class="top-title">{{ item.title }}</span>
+                @if (item.artist) {
+                  <span class="top-artist" [class.clickable]="!!item.artistId" (click)="navigateToArtist(item.artistId)">{{ item.artist }}</span>
+                }
+              </div>
+              <span class="play-count">{{ strings.STATS.PLAYS(item.plays) }}</span>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+
+    @if (topArtists().length > 0) {
+      <section class="top-section">
+        <h2>{{ strings.STATS.TOP_ARTISTS }}</h2>
+        <ol class="top-list">
+          @for (item of topArtists(); track item.name; let i = $index) {
+            <li class="top-item" [class.clickable]="!!item.id" (click)="navigateToArtist(item.id)">
+              <span class="rank">{{ i + 1 }}</span>
+              <span class="top-title">{{ item.name }}</span>
+              <span class="play-count">{{ strings.STATS.PLAYS(item.plays) }}</span>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  }
+</div>

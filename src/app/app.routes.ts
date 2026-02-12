@@ -35,6 +35,14 @@ export const routes: Routes = [
     loadComponent: () => import('./components/history/history.component').then((m) => m.HistoryComponent)
   },
   {
+    path: 'stats',
+    loadComponent: () => import('./components/stats/stats.component').then((m) => m.StatsComponent)
+  },
+  {
+    path: 'import',
+    loadComponent: () => import('./components/import/import.component').then((m) => m.ImportComponent)
+  },
+  {
     path: '**',
     redirectTo: 'free-music'
   }

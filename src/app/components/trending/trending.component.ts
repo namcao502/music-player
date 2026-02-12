@@ -102,5 +102,12 @@ export class TrendingComponent implements OnInit {
     }
   }
 
+  addToQueue(track: AudiusTrack, e: Event): void {
+    e.stopPropagation();
+    const playable = buildPlayableQueue(this.audius, [track])[0];
+    this.player.addToQueue(playable);
+    this.notification.success(TOAST.ADDED_TO_QUEUE);
+  }
+
   formatDuration = formatDuration;
 }

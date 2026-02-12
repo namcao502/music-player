@@ -10,6 +10,7 @@ export const NAV = {
   PLAYLISTS: 'Playlists',
   FAVORITES: 'Favorites',
   HISTORY: 'History',
+  STATS: 'Stats',
 } as const;
 
 // ── Theme (for toggle button) ────────────────────────────────────────────
@@ -31,6 +32,8 @@ export const PAGE = {
   HISTORY_TITLE: 'Play History',
   HISTORY_SUBTITLE: 'Your recently played tracks',
   ARTIST_FALLBACK: 'Artist',
+  STATS_TITLE: 'Your Stats',
+  STATS_SUBTITLE: 'Listening statistics',
 } as const;
 
 // ── Buttons ─────────────────────────────────────────────────────────────
@@ -86,6 +89,8 @@ export const BTN = {
   REMOVE_FROM_QUEUE: 'Remove from queue',
   REMOVE_FROM_HISTORY: 'Remove from history',
   DUPLICATE: 'Duplicate',
+  ADD_TO_QUEUE: 'Add to queue',
+  SHARE_PLAYLIST: 'Share playlist',
 } as const;
 
 // ── Empty states ────────────────────────────────────────────────────────
@@ -100,6 +105,8 @@ export const EMPTY = {
   HISTORY: 'No play history yet. Start playing some music!',
   ARTIST: 'No tracks found for this artist.',
   QUEUE: 'No tracks in queue',
+  FILTER_NO_RESULTS: 'No tracks match your filter.',
+  STATS: 'No listening data yet. Start playing some music!',
 } as const;
 
 // ── Loading messages ────────────────────────────────────────────────────
@@ -159,6 +166,13 @@ export const TOAST = {
   // Share
   TRACK_LINK_COPIED: 'Track link copied to clipboard!',
   TRACK_LINK_COPY_FAILED: 'Failed to copy link.',
+
+  // Queue
+  ADDED_TO_QUEUE: 'Added to queue',
+
+  // Playlist share
+  PLAYLIST_LINK_COPIED: 'Playlist link copied to clipboard!',
+  PLAYLIST_LINK_COPY_FAILED: 'Failed to copy playlist link.',
 } as const;
 
 // ── Section headers ─────────────────────────────────────────────────────
@@ -167,6 +181,7 @@ export const SECTION = {
   ADD_TO_PLAYLIST: 'Add to playlist',
   UP_NEXT: 'Up next',
   TAGS: 'Tags',
+  RECENT_ARTISTS: 'Recent Artists',
 } as const;
 
 // ── Labels ──────────────────────────────────────────────────────────────
@@ -217,6 +232,7 @@ export const CONFIRM = {
 // ── Placeholder text ────────────────────────────────────────────────────
 export const PLACEHOLDER = {
   SEARCH: 'Search tracks, artists...',
+  FILTER_TRACKS: 'Filter by title or artist...',
 } as const;
 
 // ── Pagination ──────────────────────────────────────────────────────────
@@ -227,4 +243,16 @@ export const PAGINATION = {
 // ── Pluralization helpers ───────────────────────────────────────────────
 export const PLURAL = {
   TRACKS: (count: number) => `${count} track${count === 1 ? '' : 's'}`,
+} as const;
+
+// ── Stats dashboard ─────────────────────────────────────────────────────
+export const STATS = {
+  TOTAL_TRACKS_PLAYED: 'Total Tracks Played',
+  UNIQUE_TRACKS: 'Unique Tracks',
+  UNIQUE_ARTISTS: 'Unique Artists',
+  TOTAL_LISTENING_TIME: 'Total Listening Time',
+  TOP_TRACKS: 'Most Played Tracks',
+  TOP_ARTISTS: 'Most Played Artists',
+  NO_DATA: 'No listening data yet. Start playing some music!',
+  PLAYS: (count: number) => `${count} play${count === 1 ? '' : 's'}`,
 } as const;

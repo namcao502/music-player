@@ -6,6 +6,7 @@
     <a routerLink="/playlists" routerLinkActive="active">{{ strings.NAV.PLAYLISTS }}</a>
     <a routerLink="/favorites" routerLinkActive="active">{{ strings.NAV.FAVORITES }}</a>
     <a routerLink="/history" routerLinkActive="active">{{ strings.NAV.HISTORY }}</a>
+    <a routerLink="/stats" routerLinkActive="active">{{ strings.NAV.STATS }}</a>
   </nav>
   <button type="button" class="theme-toggle-top" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? strings.THEME.SWITCH_TO_LIGHT : strings.THEME.SWITCH_TO_DARK">
     {{ theme.isDark() ? '☀️' : '🌙' }}

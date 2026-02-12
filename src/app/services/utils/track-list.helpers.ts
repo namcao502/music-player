@@ -11,6 +11,7 @@ export function buildPlayableQueue(audius: AudiusApiService, tracks: AudiusTrack
     id: t.id,
     title: t.title,
     artist: t.user?.name,
+    artistId: t.user?.id,
     duration: t.duration,
     coverArtUrl: audius.getArtworkUrl(t),
     streamUrl: audius.getStreamEndpointUrl(t.id)

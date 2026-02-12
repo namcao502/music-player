@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { forkJoin, map } from 'rxjs';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import type { AudiusTrack } from '../../models/audius.models';
@@ -9,24 +10,37 @@ import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
 import { PlayerService } from '../../services/player.service';
 import { NotificationService } from '../../services/utils/notification.service';
-import { TOAST, BTN, EMPTY, LOADING, PLURAL, CONFIRM } from '../../constants/ui-strings';
+import { TOAST, BTN, EMPTY, LOADING, PLURAL, CONFIRM, PLACEHOLDER } from '../../constants/ui-strings';
 import { formatDuration } from '../../services/utils/format.helpers';
 import { getPreferredArtworkUrl } from '../../services/utils/track-list.helpers';
 
 @Component({
   selector: 'app-playlist-detail',
   standalone: true,
-  imports: [DragDropModule],
+  imports: [DragDropModule, FormsModule],
   templateUrl: './playlist-detail.component.html',
   styleUrl: './playlist-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistDetailComponent implements OnInit {
-  readonly strings = { BTN, EMPTY, LOADING, PLURAL };
+  readonly strings = { BTN, EMPTY, LOADING, PLURAL, PLACEHOLDER, TOAST };
   private destroyRef = inject(DestroyRef);
   playlist = signal<{ id: string; name: string; trackIds: string[] } | null>(null);
   tracks = signal<AudiusTrack[]>([]);
   loading = signal(false);
+  filterText = signal('');
+
+  filteredTracks = computed(() => {
+    const list = this.tracks();
+    const query = this.filterText().toLowerCase().trim();
+    if (!query) return list;
+    return list.filter((t) =>
+      t.title.toLowerCase().includes(query) ||
+      (t.user?.name ?? '').toLowerCase().includes(query)
+    );
+  });
+
+  isFiltering = computed(() => this.filterText().trim().length > 0);
 
   constructor(
     private route: ActivatedRoute,
@@ -110,7 +124,6 @@ export class PlaylistDetailComponent implements OnInit {
     this.router.navigate(['/playlists']);
   }
 
-  // F3: Drag-and-Drop Reorder
   onDrop(event: CdkDragDrop<AudiusTrack[]>): void {
     if (event.previousIndex === event.currentIndex) return;
     const p = this.playlist();
@@ -138,6 +151,21 @@ export class PlaylistDetailComponent implements OnInit {
     a.click();
     URL.revokeObjectURL(url);
     this.notification.success(TOAST.PLAYLIST_EXPORTED);
+  }
+
+  async sharePlaylist(): Promise<void> {
+    const p = this.playlist();
+    if (!p || p.trackIds.length === 0) return;
+    const params = new URLSearchParams();
+    params.set('tracks', p.trackIds.join(','));
+    params.set('name', p.name);
+    const url = `${window.location.origin}/import?${params.toString()}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.notification.success(TOAST.PLAYLIST_LINK_COPIED);
+    } catch {
+      this.notification.error(TOAST.PLAYLIST_LINK_COPY_FAILED);
+    }
   }
 
   back(): void {

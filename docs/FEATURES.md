@@ -34,6 +34,7 @@ A browser-based music player built with Angular that streams free, royalty-free 
   - Duration (shortest first)
   - Duration (longest first)
   - Artist name (A-Z)
+- **Filter input** on Favorites, History, and Playlist Detail pages to filter displayed tracks by title or artist name (client-side, reactive).
 
 ---
 
@@ -53,6 +54,7 @@ A browser-based music player built with Angular that streams free, royalty-free 
 - Click a track to play it; the entire search result page (or playlist) becomes the queue.
 - Open the "Up Next" queue panel to see all queued tracks.
 - Click any track in the queue to jump to it.
+- **Add to queue:** Per-track button on Trending, Artist, Favorites, and History pages to append a track to the end of the current queue without replacing it.
 - Total queue duration displayed at the bottom.
 - Clear queue button to stop playback and reset the queue.
 - **Remove a single track** from the queue (per‑track remove button).
@@ -136,6 +138,11 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
 - **Export:** Download a playlist as a JSON file for sharing or backup.
 - **Import:** Load a playlist from a JSON file. Validates structure before importing.
 
+### 3.5 Shareable Playlist Links
+
+- **Share:** Copy a shareable URL to the clipboard from the playlist detail view.
+- Opening the shared URL (`/import?tracks=id1,id2&name=...`) automatically imports the playlist and redirects to it.
+
 ---
 
 ## 4. Favorites
@@ -143,8 +150,10 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
 - Heart icon on every track (search, trending, artist page) to mark as favorite.
 - **Dedicated Favorites page** (`/favorites`) accessible from the navigation bar.
   - Lists all favorited tracks with cover art, title, artist, and duration.
-  - "Play all" button to queue all favorites.
+  - **Filter input** to search favorites by title or artist.
+  - "Play all" button to queue all favorites (uses unfiltered list).
   - Click any track to play it.
+  - **Add to queue** button per track.
   - Remove button (filled heart) to unfavorite directly from the list.
   - Track details fetched on demand from Audius.
 - Favorites are stored locally and persist across sessions.
@@ -155,16 +164,34 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
 ## 5. Play History
 
 - Automatically records the last 50 played tracks with timestamps.
+- **Play count tracking:** Each play increments a per-track counter (persisted separately from history).
 - View history on the History page.
+- **Recently played artists:** Clickable artist chips (up to 10) at the top of the history page; clicking navigates to the artist page.
+- **Filter input** to search history by title or artist.
 - **Sort history** by date, title, or artist (chips above the list).
 - Click any entry to replay the track.
+- **Add to queue** button per track.
 - **Remove a single entry** from history (per‑row remove button).
-- Clear history with one click.
+- Clear history with one click (also clears play counts).
 - Persists across sessions.
 
 ---
 
-## 6. Theming
+## 6. Stats Dashboard
+
+- **Dedicated Stats page** (`/stats`) accessible from the navigation bar.
+- Overview cards:
+  - **Total Tracks Played** (sum of all play counts).
+  - **Unique Tracks** (number of distinct tracks in history).
+  - **Unique Artists** (number of distinct artists in history).
+  - **Total Listening Time** (estimated from track durations × play counts, formatted as `Xh Ym`).
+- **Most Played Tracks:** Top 5 tracks ranked by play count.
+- **Most Played Artists:** Top 5 artists ranked by aggregated play counts, with clickable links to artist pages.
+- All data is computed from the play history and play count map — no additional API calls needed.
+
+---
+
+## 7. Theming
 
 - **Dark mode** (default) and **Light mode**.
 - Toggle via the sun/moon button in the top-right corner.
@@ -173,7 +200,7 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
 
 ---
 
-## 7. Responsive Layout
+## 8. Responsive Layout
 
 - Mobile-friendly layout at screen widths below 640px:
   - Horizontally scrollable navigation bar.
@@ -182,7 +209,7 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
 
 ---
 
-## 8. PWA (Progressive Web App)
+## 9. PWA (Progressive Web App)
 
 - **Installable** on mobile and desktop (Add to Home Screen).
 - **Offline support:** App shell cached on first load via Angular Service Worker.
@@ -192,7 +219,7 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
 
 ---
 
-## 9. Technical Details
+## 10. Technical Details
 
 ### Data Source
 
@@ -208,6 +235,7 @@ All user data is stored in the browser's `localStorage`:
 | `music-player-theme` | Theme preference (light/dark) |
 | `music-player-favorites` | Set of favorite track IDs |
 | `music-player-history` | Last 50 played tracks with timestamps |
+| `music-player-play-counts` | Per-track play count map (`Record<string, number>`) |
 | `free-music-recent-searches` | Last 5 search queries |
 | `crossfade-duration` | Crossfade setting (0–12 seconds) |
 | `music-player-volume` | Volume level (0–1) |
@@ -219,10 +247,11 @@ All user data is stored in the browser's `localStorage`:
 - Non‑blocking toast notifications for key actions:
   - Playlist create / rename / delete / import / export.
   - Add / remove from favorites and playlists.
+  - **Added to queue.**
   - Clear queue, clear history; **removed from queue**, **removed from history**.
   - **Playlist duplicated.**
   - Sleep timer set / ended / cancelled.
-  - Share link copy success / failure.
+  - Share link copy success / failure; **playlist link copied** / failed.
 
 ### Routes
 
@@ -235,6 +264,8 @@ All user data is stored in the browser's `localStorage`:
 | `/artist/:id` | Artist track list |
 | `/favorites` | Favorite tracks |
 | `/history` | Play history |
+| `/stats` | Listening stats dashboard |
+| `/import` | Playlist import from shared URL |
 
 ### UI Strings
 

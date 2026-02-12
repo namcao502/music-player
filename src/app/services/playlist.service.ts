@@ -202,6 +202,7 @@ export class PlaylistService {
                 id: t.id,
                 title: t.title,
                 artist: t.user?.name,
+                artistId: t.user?.id,
                 duration: t.duration,
                 coverArtUrl: this.audius.getArtworkUrl(t) || undefined,
                 streamUrl: this.audius.getStreamEndpointUrl(t.id)

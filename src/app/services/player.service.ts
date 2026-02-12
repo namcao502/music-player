@@ -5,6 +5,8 @@ export interface PlayableTrack {
   id: string;
   title: string;
   artist?: string;
+  /** Audius user ID of the artist. */
+  artistId?: string;
   album?: string;
   duration: number;
   /** Full image URL (e.g. from Audius). */
@@ -151,6 +153,16 @@ export class PlayerService {
     const idx = list.findIndex((s) => s.id === now.track.id);
     const prevIdx = idx <= 0 ? list.length - 1 : idx - 1;
     this.play(list[prevIdx]);
+  }
+
+  /** Append a track to the end of the queue. If nothing is playing, start playback. Returns true if playback started. */
+  addToQueue(track: PlayableTrack): boolean {
+    if (this.queue().length === 0 && !this.current()) {
+      this.playQueue([track], 0);
+      return true;
+    }
+    this.queue.update((q) => [...q, track]);
+    return false;
   }
 
   clearQueue(): void {
