@@ -1027,6 +1027,35 @@
   }
 }
 
+/* Responsive: compact layout for medium widths (e.g. tablet / small desktop) */
+@media (max-width: 900px) {
+  .player-bar {
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
+
+  .now-playing {
+    flex: 0 0 auto;
+    max-width: 180px;
+  }
+
+  .center-controls {
+    max-width: 420px;
+  }
+
+  .right-controls {
+    gap: 0.5rem;
+  }
+
+  .volume-slider {
+    width: 60px;
+  }
+
+  .queue-btn span {
+    display: none;
+  }
+}
+
 /* Responsive: mobile */
 @media (max-width: 640px) {
   .player-bar {
@@ -1085,10 +1114,6 @@
 
   .desktop-only {
     display: none !important;
-  }
-
-  .mini-controls {
-    display: none;
   }
 
   .queue-btn span {

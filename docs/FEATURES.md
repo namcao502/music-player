@@ -9,10 +9,11 @@ A browser-based music player built with Angular that streams free, royalty-free 
 ### 1.1 Search
 
 - Search millions of tracks on Audius by keyword.
+- **Search autocomplete:** As you type (≥2 characters), up to 6 track suggestions appear in a dropdown; selecting one runs a full search with that query and shows paginated results.
 - Paginated results (24 tracks per page) with Previous / Next navigation.
 - Recent searches (last 5) saved locally and shown as clickable chips.
 - Clear recent searches with one click.
-- One-click share button on each result to copy a shareable track link.
+- One-click share button on each result to copy a shareable Audius track link (`https://audius.co/tracks/:id`); success or failure is shown via toast.
 
 ### 1.2 Trending Tracks
 
@@ -96,7 +97,11 @@ A browser-based music player built with Angular that streams free, royalty-free 
 - Sleep timer in the queue footer to automatically stop playback after 15, 30, or 60 minutes.
 - Visible countdown and one‑click cancel button while the timer is active.
 
-### 2.10 Keyboard Shortcuts
+### 2.10 Advanced playback controls
+
+- **Mini player** (2.8), **Audio visualizer** (2.7), **Sleep timer** (2.9), and **Crossfade** (2.5) are available from the player bar and queue panel; see the subsections above for details.
+
+### 2.11 Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -106,7 +111,7 @@ A browser-based music player built with Angular that streams free, royalty-free 
 
 Shortcuts are disabled when typing in a text input.
 
-Media keys (Play/Pause, Next, Previous) are also supported when available.
+Media keys (Play/Pause, Next, Previous) are also supported via the browser Media Session API when available, so OS-level controls (hardware media keys, system overlay) can play/pause and skip tracks and show "Now playing" metadata.
 
 ---
 
@@ -184,7 +189,7 @@ Media keys (Play/Pause, Next, Previous) are also supported when available.
   - **Total Tracks Played** (sum of all play counts).
   - **Unique Tracks** (number of distinct tracks in history).
   - **Unique Artists** (number of distinct artists in history).
-  - **Total Listening Time** (estimated from track durations × play counts, formatted as `Xh Ym`).
+  - **Total Listening Time** (estimated from track durations in seconds × play counts; formatted as `Xh Ym` or `Xm` when under 1 hour).
 - **Most Played Tracks:** Top 5 tracks ranked by play count.
 - **Most Played Artists:** Top 5 artists ranked by aggregated play counts, with clickable links to artist pages.
 - All data is computed from the play history and play count map — no additional API calls needed.

@@ -39,6 +39,16 @@ The **Free Music** screen lets users search and stream royalty-free tracks from 
 - `artworkUrl(track)`: tries `getArtworkUrl(track, '480x480')` then `'150x150'`.
 - On image load error (`onCoverError(trackId)`): adds track id to `brokenCoverIds` set and shows a fallback music symbol. `brokenCoverIds` is persisted in `FreeMusicStateService` so broken covers stay hidden across tab switch.
 
+### 2.5 Search autocomplete
+
+- As the user types in the search input, `onQueryInput(value)` updates `query` and pushes to a `Subject`. A pipe (debounce 300ms, distinctUntilChanged, filter length ≥2) calls `searchTracks(q.trim(), 6)` and sets `suggestions` and `showSuggestions`.
+- Up to 6 suggestions are shown in a dropdown. Selecting a suggestion (`selectSuggestion(track)`) sets the query to the track title and runs a full search (`onSearch()`). Document click or closing the dropdown clears suggestions.
+- Error and loading messages for search use strings from `src/app/constants/ui-strings.ts` (e.g. `ERROR.SEARCH_FAILED`); add or change messages there rather than in this component.
+
+### 2.6 Share track
+
+- Per result, a share button calls `shareTrack(trackId, event)`: copies `https://audius.co/tracks/{trackId}` to the clipboard via `navigator.clipboard.writeText`, then shows `TOAST.TRACK_LINK_COPIED` on success or `TOAST.TRACK_LINK_COPY_FAILED` on failure. `event.stopPropagation()` prevents the card click from firing.
+
 ---
 
 ## 3. State persistence

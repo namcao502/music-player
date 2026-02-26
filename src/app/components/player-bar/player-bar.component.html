@@ -1,7 +1,7 @@
 <audio #audioEl class="audio-el"></audio>
 <div class="sr-only" aria-live="polite" aria-atomic="true">{{ nowPlayingAnnouncement() }}</div>
 @if (player.nowPlaying(); as np) {
-  <div class="player-bar" [class.mini-player]="miniMode()">
+  <div class="player-bar" [class.mini-player]="miniMode() || layoutMode() === 'minimal'">
 
     <div class="now-playing">
       <button
@@ -36,23 +36,25 @@
         <app-audio-visualizer [analyser]="analyserNode" />
       }
       <div class="controls">
-        <button
-          type="button"
-          class="control-toggle"
-          (click)="player.toggleShuffle()"
-          [class.is-active]="player.shuffleEnabled()"
-          [attr.aria-label]="'Toggle ' + strings.BTN.SHUFFLE"
-          [attr.aria-pressed]="player.shuffleEnabled()"
-          [attr.title]="strings.BTN.SHUFFLE"
-        >
-          <svg class="icon icon-shuffle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M16 3h5v5" />
-            <path d="M4 20l16-16" />
-            <path d="M21 16v5h-5" />
-            <path d="M4 4l6 6" />
-            <path d="M14 14l6 6" />
-          </svg>
-        </button>
+        @if (layoutMode() === 'full') {
+          <button
+            type="button"
+            class="control-toggle"
+            (click)="player.toggleShuffle()"
+            [class.is-active]="player.shuffleEnabled()"
+            [attr.aria-label]="'Toggle ' + strings.BTN.SHUFFLE"
+            [attr.aria-pressed]="player.shuffleEnabled()"
+            [attr.title]="strings.BTN.SHUFFLE"
+          >
+            <svg class="icon icon-shuffle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M16 3h5v5" />
+              <path d="M4 20l16-16" />
+              <path d="M21 16v5h-5" />
+              <path d="M4 4l6 6" />
+              <path d="M14 14l6 6" />
+            </svg>
+          </button>
+        }
         <button type="button" (click)="player.previous()" [attr.aria-label]="strings.BTN.PREVIOUS">
           <svg class="icon icon-prev-next" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/></svg>
         </button>
@@ -66,24 +68,26 @@
         <button type="button" (click)="player.next()" [attr.aria-label]="strings.BTN.NEXT">
           <svg class="icon icon-prev-next" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z"/></svg>
         </button>
-        <button
-          type="button"
-          class="control-toggle"
-          (click)="player.cycleLoopMode()"
-          [class.is-active]="player.loopMode() !== 'off'"
-          [attr.aria-label]="'Change ' + strings.BTN.LOOP + ' mode'"
-          [attr.title]="strings.BTN.LOOP"
-        >
-          <svg class="icon icon-loop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M17 2l4 4-4 4" />
-            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-            <path d="M7 22l-4-4 4-4" />
-            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-          </svg>
-          @if (player.loopMode() === 'one') {
-            <span class="loop-one-badge" aria-hidden="true">1</span>
-          }
-        </button>
+        @if (layoutMode() === 'full') {
+          <button
+            type="button"
+            class="control-toggle"
+            (click)="player.cycleLoopMode()"
+            [class.is-active]="player.loopMode() !== 'off'"
+            [attr.aria-label]="'Change ' + strings.BTN.LOOP + ' mode'"
+            [attr.title]="strings.BTN.LOOP"
+          >
+            <svg class="icon icon-loop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17 2l4 4-4 4" />
+              <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+              <path d="M7 22l-4-4 4-4" />
+              <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+            </svg>
+            @if (player.loopMode() === 'one') {
+              <span class="loop-one-badge" aria-hidden="true">1</span>
+            }
+          </button>
+        }
       </div>
       <div class="progress-wrap">
         <button type="button" class="seek-btn" (click)="seekRelative(-10)" [attr.aria-label]="strings.BTN.SEEK_BACK" [attr.title]="strings.BTN.SEEK_BACK">−10</button>
@@ -105,25 +109,27 @@
 
     <div class="right-controls">
       <!-- F4: Playback Speed -->
-      <div class="speed-wrap desktop-only">
-        <button type="button" class="speed-btn" (click)="toggleSpeedMenu(); $event.stopPropagation()" [attr.title]="strings.BTN.PLAYBACK_SPEED">
-          {{ playbackSpeed() }}x
-        </button>
-        @if (speedMenuOpen()) {
-          <div class="speed-menu" (click)="$event.stopPropagation()">
-            @for (speed of SPEED_OPTIONS; track speed) {
-              <button
-                type="button"
-                class="speed-option"
-                [class.active]="playbackSpeed() === speed"
-                (click)="setPlaybackSpeed(speed)"
-              >
-                {{ speed }}x
-              </button>
-            }
-          </div>
-        }
-      </div>
+      @if (layoutMode() === 'full') {
+        <div class="speed-wrap desktop-only">
+          <button type="button" class="speed-btn" (click)="toggleSpeedMenu(); $event.stopPropagation()" [attr.title]="strings.BTN.PLAYBACK_SPEED">
+            {{ playbackSpeed() }}x
+          </button>
+          @if (speedMenuOpen()) {
+            <div class="speed-menu" (click)="$event.stopPropagation()">
+              @for (speed of SPEED_OPTIONS; track speed) {
+                <button
+                  type="button"
+                  class="speed-option"
+                  [class.active]="playbackSpeed() === speed"
+                  (click)="setPlaybackSpeed(speed)"
+                >
+                  {{ speed }}x
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
 
       <div class="volume-wrap">
         <!-- F2: Mute Toggle — wrap SVG in button -->
@@ -151,20 +157,24 @@
       </div>
 
       <!-- F10: Visualizer Toggle -->
-      <button type="button" class="icon-btn desktop-only" (click)="toggleVisualizer()" [class.is-active]="showVisualizer()" [attr.title]="strings.BTN.TOGGLE_VISUALIZER" [attr.aria-label]="strings.BTN.TOGGLE_VISUALIZER">
-        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v18m-4-14v10m-4-6v2m8-10v18m4-14v10m4-6v2"/></svg>
-      </button>
+      @if (layoutMode() !== 'minimal') {
+        <button type="button" class="icon-btn desktop-only" (click)="toggleVisualizer()" [class.is-active]="showVisualizer()" [attr.title]="strings.BTN.TOGGLE_VISUALIZER" [attr.aria-label]="strings.BTN.TOGGLE_VISUALIZER">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v18m-4-14v10m-4-6v2m8-10v18m4-14v10m4-6v2"/></svg>
+        </button>
+      }
 
       <!-- F9: Mini Mode Toggle -->
-      <button type="button" class="icon-btn desktop-only" (click)="toggleMiniMode()" [class.is-active]="miniMode()" [attr.title]="strings.BTN.TOGGLE_MINI_PLAYER" [attr.aria-label]="strings.BTN.TOGGLE_MINI_PLAYER">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          @if (miniMode()) {
-            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
-          } @else {
-            <path d="M4 14h6v6M14 4h6v6M10 14l-7 7M21 3l-7 7"/>
-          }
-        </svg>
-      </button>
+      @if (layoutMode() === 'full') {
+        <button type="button" class="icon-btn desktop-only" (click)="toggleMiniMode()" [class.is-active]="miniMode()" [attr.title]="strings.BTN.TOGGLE_MINI_PLAYER" [attr.aria-label]="strings.BTN.TOGGLE_MINI_PLAYER">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            @if (miniMode()) {
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            } @else {
+              <path d="M4 14h6v6M14 4h6v6M10 14l-7 7M21 3l-7 7"/>
+            }
+          </svg>
+        </button>
+      }
 
       <button
         type="button"
@@ -179,7 +189,7 @@
     </div>
 
     <!-- F9: Mini mode compact controls overlay -->
-    @if (miniMode()) {
+    @if (miniMode() || layoutMode() === 'minimal') {
       <div class="mini-controls">
         <button type="button" class="mini-play-pause" (click)="player.togglePlayPause()" [attr.aria-label]="player.isPlaying() ? strings.BTN.PAUSE : strings.BTN.PLAY">
           @if (player.isPlaying()) {

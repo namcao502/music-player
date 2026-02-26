@@ -126,7 +126,23 @@ Helper methods: `formatDuration(seconds)` returns `M:SS`; `artworkUrl(track)` tr
 
 ---
 
-## 8. Add to playlist (from Free Music and Queue)
+## 8. Tag management
+
+- Each playlist can have optional `tags: string[]`. **PlaylistService** exposes `addTag(playlistId, tag)` and `removeTag(playlistId, tag)`; both persist to localStorage.
+- On the playlist list page, **tag filter chips** show distinct tags across all playlists. Selecting a tag filters the list to playlists that have that tag; the underlying data is unchanged. Removing the tag filter shows all playlists again.
+- Tags are stored with the playlist; duplicate playlists copy tags. Export/import preserves tags when the JSON includes a `tags` array.
+
+---
+
+## 9. Import, export, and shareable URLs
+
+- **Export:** `PlaylistService.exportPlaylist(id)` returns a JSON string of the `Playlist` object (`id`, `name`, `trackIds`, `tags` if present). The UI typically triggers a download of this file.
+- **Import (file):** The user selects a JSON file; the app reads it and calls `PlaylistService.importPlaylist(json)`. The payload must be an object with `name` (string) and `trackIds` (array of non-empty strings); invalid or missing data returns `null` and shows an error toast. Valid import creates a new playlist and shows a success toast.
+- **Import (URL):** The route `/import?tracks=id1,id2,...&name=...` is handled by **ImportComponent**. It reads `tracks` and `name` from the query string, builds a JSON object `{ name, trackIds }` (trackIds from splitting `tracks` by comma and trimming), and calls `importPlaylist(JSON.stringify(...))`. If `trackIds` is empty after parsing, it redirects to `/playlists` without calling import. If import succeeds, it redirects to `/playlists/:newId`; otherwise to `/playlists`. This is the same contract as pasting exported JSON into an import flow: the same `Playlist` shape is expected.
+
+---
+
+## 10. Add to playlist (from Free Music and Queue)
 
 ### From FreeMusicComponent
 
@@ -144,7 +160,7 @@ Helper methods: `formatDuration(seconds)` returns `M:SS`; `artworkUrl(track)` tr
 
 ---
 
-## 9. File checklist
+## 11. File checklist
 
 | File | Purpose |
 |------|---------|

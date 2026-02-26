@@ -2,7 +2,15 @@
 
 This document describes how the app works end-to-end: routes, user flow, and technical flow. The app has two main areas: **Free Music** (search and stream from Audius) and **Playlists** (saved track lists in `localStorage`). No login, no backend.
 
-**Docs:** Feature designs: `docs/FREE_MUSIC_PLAN.md`, `docs/PLAYLIST_PLAN.md`. Tests: `docs/TEST_PLAN.md`.
+**Docs:** Feature list: `docs/FEATURES.md`. Module designs: `docs/FREE_MUSIC_PLAN.md`, `docs/PLAYLIST_PLAN.md`. Tests: `docs/TEST_PLAN.md`.
+
+---
+
+## 0. Architecture overview
+
+- **Core services:** **PlayerService** (now playing, queue, shuffle/loop); **AudiusApiService** (search, track by id, stream URL, artwork); **ThemeService** (light/dark); **PlaylistService** (CRUD, tags, getPlayableTracks, import/export); **FavoritesService** (favorite IDs); **HistoryService** (last 50 plays + play counts); **FreeMusicStateService** (in-memory Free Music state); **PlaylistModalService** (prompt/confirm modals).
+- **Routing:** Default route `''` → `/free-music`. All feature routes are lazy-loaded. Wildcard `**` → `/free-music`.
+- **State:** Playback and UI state live in services (signals); persistence is `localStorage` for playlists, theme, favorites, history, play counts, recent searches, volume, muted, playback speed, crossfade. See **State and persistence** below and the storage table in `docs/FEATURES.md`.
 
 ---
 
@@ -121,7 +129,14 @@ Player bar: timeupdate -> currentTime; play -> setPlaying(true);
 
 ---
 
-## 5. Services and responsibilities
+## 5. State and persistence
+
+- All persistent user data is in the browser’s `localStorage`. Keys and contents are documented in **Technical Details → Storage** in `docs/FEATURES.md`.
+- Summary: playlists (`music-player-playlists`), theme (`music-player-theme`), favorites (`music-player-favorites`), history (`music-player-history`), play counts (`music-player-play-counts`), recent searches (`free-music-recent-searches`), crossfade (`crossfade-duration`), volume (`music-player-volume`), muted (`music-player-muted`), playback speed (`music-player-playback-speed`). In-memory only: Free Music search state (query, tracks, page, etc.) in **FreeMusicStateService** when navigating between tabs.
+
+---
+
+## 6. Services and responsibilities
 
 | Service | Role |
 |---------|------|
@@ -136,7 +151,7 @@ Player bar: timeupdate -> currentTime; play -> setPlaying(true);
 
 ---
 
-## 6. Main components
+## 7. Main components
 
 | Component | Role |
 |-----------|------|
@@ -155,7 +170,7 @@ Player bar: timeupdate -> currentTime; play -> setPlaying(true);
 
 ---
 
-## 7. Data flow summary
+## 8. Data flow summary
 
 ```
 Free Music:
@@ -208,11 +223,12 @@ Player bar:
   Queue panel: remove-from-queue per item (removeFromQueue(index)), add-to-playlist per item (PlaylistService.addTrack or create new via modal)
   Clear queue: pause audio, clearCrossfade, clearQueue, stop
   Volume/playback speed: read from localStorage on init (music-player-volume, music-player-playback-speed); saved on change
+  Media Session: when supported, PlayerBar wires navigator.mediaSession (handlers + MediaMetadata) so OS-level media keys and overlays control play/pause/next/previous and show track info
 ```
 
 ---
 
-## 8. Theme and UI
+## 9. Theme and UI
 
 - **ThemeService** reads theme from localStorage (`music-player-theme`) or `prefers-color-scheme`; applies class on `<html>`.
 - **index.html** script runs before Angular: sets theme class immediately to avoid flash.
@@ -221,7 +237,7 @@ Player bar:
 
 ---
 
-## 9. Key models
+## 10. Key models
 
 ```ts
 // PlayableTrack (player.service.ts)

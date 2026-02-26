@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { PlayerService } from '../../services/player.service';
+import type { PlayableTrack } from '../../services/player.service';
 import { PlaylistModalService } from '../../services/playlist-modal.service';
 import { PlaylistService } from '../../services/playlist.service';
 import { SleepTimerService } from '../../services/sleep-timer.service';
@@ -43,6 +44,10 @@ export class PlayerBarComponent implements OnDestroy {
   private crossfadeInterval: ReturnType<typeof setInterval> | null = null;
   /** True while a crossfade is in progress (prevents re-triggering). */
   private crossfading = false;
+  /** Ensure Media Session action handlers are registered only once. */
+  private mediaSessionHandlersSet = false;
+  /** Cleanup for window resize listener used for layout mode. */
+  private resizeCleanup: (() => void) | null = null;
 
   currentTime = signal(0);
   duration = signal(0);
@@ -114,6 +119,9 @@ export class PlayerBarComponent implements OnDestroy {
     this.player.setPlaying(false);
   };
 
+  /** Responsive layout mode for the player bar. */
+  layoutMode = signal<'full' | 'compact' | 'minimal'>('full');
+
   private static readonly VOLUME_STORAGE_KEY = 'music-player-volume';
   private static readonly MUTED_STORAGE_KEY = 'music-player-muted';
   private static readonly SPEED_STORAGE_KEY = 'music-player-playback-speed';
@@ -150,6 +158,23 @@ export class PlayerBarComponent implements OnDestroy {
           setTimeout(() => this.syncFromElement(), 1600);
         });
       }
+
+      // Layout mode: full / compact / minimal based on viewport width
+      if (typeof window !== 'undefined') {
+        const updateLayoutMode = (): void => {
+          const width = window.innerWidth;
+          let mode: 'full' | 'compact' | 'minimal' = 'full';
+          if (width <= 640) {
+            mode = 'minimal';
+          } else if (width <= 900) {
+            mode = 'compact';
+          }
+          this.layoutMode.set(mode);
+        };
+        updateLayoutMode();
+        window.addEventListener('resize', updateLayoutMode);
+        this.resizeCleanup = () => window.removeEventListener('resize', updateLayoutMode);
+      }
     });
 
     effect(() => {
@@ -160,6 +185,7 @@ export class PlayerBarComponent implements OnDestroy {
       if (!np || !el) {
         this.loadedTrackId = null;
         this.coverError.set(false);
+        this.updateMediaSession(null, false);
         return;
       }
       const isNewTrack = this.loadedTrackId !== np.track.id;
@@ -186,6 +212,7 @@ export class PlayerBarComponent implements OnDestroy {
       } else {
         el.pause();
       }
+      this.updateMediaSession(np.track, playing);
     }, { allowSignalWrites: true });
   }
 
@@ -218,6 +245,8 @@ export class PlayerBarComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.retryPlayCleanup?.();
     this.retryPlayCleanup = null;
+    this.resizeCleanup?.();
+    this.resizeCleanup = null;
     this.clearCrossfade();
     if (this.attachedEl) this.detachAudioListeners(this.attachedEl);
     this.attachedEl = null;
@@ -329,6 +358,45 @@ export class PlayerBarComponent implements OnDestroy {
       document.removeEventListener('click', handler, opts);
       document.removeEventListener('keydown', handler, opts);
     };
+  }
+
+  /** Wire browser/OS media controls (play/pause/next/previous) via the Media Session API. */
+  private updateMediaSession(track: PlayableTrack | null, playing: boolean): void {
+    if (typeof navigator === 'undefined' || typeof window === 'undefined') return;
+    const anyNavigator = navigator as any;
+    const mediaSession = anyNavigator.mediaSession as any;
+    if (!mediaSession) return;
+
+    if (!this.mediaSessionHandlersSet) {
+      try {
+        mediaSession.setActionHandler('play', () => this.player.setPlaying(true));
+        mediaSession.setActionHandler('pause', () => this.player.setPlaying(false));
+        mediaSession.setActionHandler('previoustrack', () => this.player.previous());
+        mediaSession.setActionHandler('nexttrack', () => this.player.next());
+        this.mediaSessionHandlersSet = true;
+      } catch {
+        // Ignore if action handlers are not supported.
+      }
+    }
+
+    if (!track) {
+      mediaSession.metadata = null;
+      mediaSession.playbackState = 'none';
+      return;
+    }
+
+    const MediaMetadataCtor = (window as any).MediaMetadata;
+    if (MediaMetadataCtor) {
+      mediaSession.metadata = new MediaMetadataCtor({
+        title: track.title,
+        artist: track.artist ?? '',
+        album: track.album ?? '',
+        artwork: track.coverArtUrl
+          ? [{ src: track.coverArtUrl, sizes: '512x512', type: 'image/jpeg' }]
+          : []
+      });
+    }
+    mediaSession.playbackState = playing ? 'playing' : 'paused';
   }
 
   /** Sync play state and seekbar from the audio element so UI matches actual playback. */

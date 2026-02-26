@@ -24,8 +24,8 @@ This document defines the test plan and test cases per module for the Music Play
 | **FreeMusicStateService** | Service | — | Not tested (trivial signal holder) |
 | **HistoryService** | Service | `services/history.service.spec.ts` | Tested |
 | **HistoryComponent** | Component | `components/history/history.component.spec.ts` | Tested |
-| **StatsComponent** | Component | `components/stats/stats.component.spec.ts` | Not tested (new) |
-| **ImportComponent** | Component | `components/import/import.component.spec.ts` | Not tested (new) |
+| **StatsComponent** | Component | `components/stats/stats.component.spec.ts` | Tested (ST1–ST5) |
+| **ImportComponent** | Component | `components/import/import.component.spec.ts` | Tested (IM1–IM2) |
 
 ---
 
@@ -209,9 +209,26 @@ This document defines the test plan and test cases per module for the Music Play
 | MC4 | Confirm no calls `closeConfirm(false)` | `closeConfirm(false)` called. |
 | MC5 | Backdrop click cancels active modal | Prompt: `closePrompt(null)`; Confirm: `closeConfirm(false)`. |
 
-### 3.12 New Features (not yet tested)
+### 3.12 StatsComponent
 
-The following features were added and are covered by the build (compile) but do not yet have dedicated spec files. Consider adding tests:
+| ID | Description | Assertions |
+|----|-------------|------------|
+| ST1 | `hasData` is false when history is empty | No data -> empty state shown. |
+| ST2 | `totalPlays` sums all play counts | Two tracks with 3 and 2 plays -> 5. |
+| ST3 | `uniqueArtists` counts distinct artists | History with 3 entries from 2 artists -> 2. |
+| ST4 | `topTracks` returns up to 5, sorted by play count desc | Top track has highest count. |
+| ST5 | `topArtists` aggregates counts by artist | Artist with two tracks combines play counts. |
+
+### 3.13 ImportComponent
+
+| ID | Description | Assertions |
+|----|-------------|------------|
+| IM1 | Valid query params import playlist and redirect | `importPlaylist` called; `navigate` to `/playlists/:id`. |
+| IM2 | Empty tracks param redirects to `/playlists` | No `importPlaylist` call; `navigate` to `/playlists`. |
+
+### 3.14 New Features (not yet tested)
+
+The following features are covered by the build but do not yet have dedicated spec coverage. Consider adding tests:
 
 **PlayerService.addToQueue:**
 
@@ -236,23 +253,6 @@ The following features were added and are covered by the build (compile) but do 
 | HC2 | `clearHistory` resets play counts | After clear, `playCountMap()` is `{}`. |
 | HC3 | `loadPlayCounts` handles missing/invalid data | No stored key -> returns `{}`; invalid JSON -> returns `{}`. |
 
-**StatsComponent:**
-
-| ID | Description | Assertions |
-|----|-------------|------------|
-| ST1 | `hasData` is false when history is empty | No data -> empty state shown. |
-| ST2 | `totalPlays` sums all play counts | Two tracks with 3 and 2 plays -> 5. |
-| ST3 | `uniqueArtists` counts distinct artists | History with 3 entries from 2 artists -> 2. |
-| ST4 | `topTracks` returns up to 5, sorted by play count desc | Top track has highest count. |
-| ST5 | `topArtists` aggregates counts by artist | Artist with two tracks combines play counts. |
-
-**ImportComponent:**
-
-| ID | Description | Assertions |
-|----|-------------|------------|
-| IM1 | Valid query params import playlist and redirect | `importPlaylist` called; `navigate` to `/playlists/:id`. |
-| IM2 | Empty tracks param redirects to `/playlists` | No `importPlaylist` call; `navigate` to `/playlists`. |
-
 ---
 
 ## 4. Verification
@@ -270,4 +270,4 @@ For a single run (no watch) with headless Chrome:
 npx ng test --no-watch --browsers=ChromeHeadless
 ```
 
-**Current status:** 189 tests passing. Covered: ThemeService, AudiusApiService, PlayerService (incl. removeFromQueue, addToQueue), AppComponent, FreeMusicComponent, PlayerBarComponent (incl. seek, volume/speed, queue remove), PlaylistService (incl. duplicate, tags), PlaylistListComponent (incl. duplicate, sort), PlaylistDetailComponent, PlaylistModalService/Component, HistoryService (incl. play counts), HistoryComponent (incl. sort, filter, removeEntry, recentArtists). FreeMusicStateService not tested (trivial signal holder). StatsComponent and ImportComponent not yet tested (new components).
+**Current status:** 205 tests passing. Covered: ThemeService, AudiusApiService, PlayerService (incl. removeFromQueue, addToQueue), AppComponent, FreeMusicComponent, PlayerBarComponent (incl. seek, volume/speed, queue remove), PlaylistService (incl. duplicate, tags), PlaylistListComponent (incl. duplicate, sort), PlaylistDetailComponent, PlaylistModalService/Component, HistoryService (incl. play counts), HistoryComponent (incl. sort, filter, removeEntry, recentArtists), **StatsComponent** (ST1–ST5), **ImportComponent** (IM1–IM2). FreeMusicStateService not tested (trivial signal holder).

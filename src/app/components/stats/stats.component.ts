@@ -31,12 +31,12 @@ export class StatsComponent {
 
   totalListeningTime = computed(() => {
     const counts = this.historyService.playCountMap();
-    let totalMs = 0;
+    let totalSeconds = 0;
     for (const entry of this.historyService.historyList()) {
       const plays = counts[entry.track.id] ?? 1;
-      totalMs += (entry.track.duration ?? 0) * plays;
+      totalSeconds += (entry.track.duration ?? 0) * plays;
     }
-    return this.formatTime(totalMs);
+    return this.formatTime(totalSeconds);
   });
 
   topTracks = computed(() => {
@@ -83,8 +83,8 @@ export class StatsComponent {
     if (id) this.router.navigate(['/artist', id]);
   }
 
-  private formatTime(ms: number): string {
-    const totalMinutes = Math.floor(ms / 60000);
+  private formatTime(seconds: number): string {
+    const totalMinutes = Math.floor(seconds / 60);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     if (hours > 0) return `${hours}h ${minutes}m`;
