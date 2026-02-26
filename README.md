@@ -27,7 +27,7 @@ Output is in `dist/music-player/browser/`. Serve with any static file server. PW
 npm test
 ```
 
-189 unit tests (Jasmine + Karma).
+205 unit tests (Jasmine + Karma).
 
 ---
 
@@ -35,7 +35,7 @@ npm test
 
 ### Music Discovery
 
-- **Search** millions of tracks on Audius by keyword with paginated results (24 per page).
+- **Search** millions of tracks on Audius by keyword; **autocomplete** suggestions as you type (≥2 chars); paginated results (24 per page).
 - **Trending** — browse the top 50 trending tracks.
 - **Artist pages** — click any artist name to see their full track list.
 - **Sort** search results by relevance, duration, or artist name.
@@ -48,7 +48,7 @@ npm test
 - **Shuffle** and **Loop** (off / loop all / loop one).
 - **Volume** and **playback speed** — persisted across sessions; dynamic speaker icon.
 - **Crossfade** — smooth fade between tracks (0–12 seconds, configurable in queue panel).
-- **Keyboard shortcuts** — Space (play/pause), Left/Right arrows (previous/next); media keys when available.
+- **Keyboard shortcuts** — Space (play/pause), Left/Right arrows (previous/next); **Media Session API** for OS-level media keys and “Now playing” in system overlay.
 - **Sleep timer**, **share track link**; optional **audio visualizer** and **mini player** (desktop).
 
 ### Playlists
@@ -63,10 +63,11 @@ npm test
 - Heart icon on every track to mark as favorite.
 - Dedicated **Favorites page** to view, play, and manage all liked tracks.
 
-### Play History
+### Play History & Stats
 
 - Automatically records the last 50 played tracks with timestamps.
 - **History page**: **sort** by date, title, or artist; replay any track; **remove** single entry or clear all.
+- **Stats page**: total plays, unique artists, top tracks/artists, total listening time (from history and play counts).
 
 ### Theming
 
@@ -80,8 +81,8 @@ npm test
 
 ### Responsive & PWA
 
-- Mobile-friendly layout at screen widths below 640px.
-- **Installable** as a Progressive Web App (Add to Home Screen).
+- **Responsive player bar:** full layout (wide), compact (≤900px), minimal (≤640px) with core controls always available.
+- Mobile-friendly layout; **installable** as a PWA (Add to Home Screen).
 - **Offline support** — app shell cached via Angular Service Worker; API responses cached for 1 hour.
 
 ---
@@ -95,8 +96,9 @@ npm test
 | Playlists | `/playlists` | Manage playlists |
 | Favorites | `/favorites` | Liked tracks |
 | History | `/history` | Recently played |
+| Stats | `/stats` | Listening stats (plays, top tracks/artists, total time) |
 
-Additional routes: `/playlists/:id` (playlist detail), `/artist/:id` (artist page).
+Additional routes: `/playlists/:id` (playlist detail), `/artist/:id` (artist page), `/import?tracks=id1,id2,...&name=...` (import playlist from URL).
 
 ---
 
@@ -112,6 +114,8 @@ src/app/
     playlist-detail/  Single playlist (reorder, export, play)
     favorites/        Favorited tracks list
     history/          Play history with timestamps
+    stats/            Listening stats (plays, top tracks/artists, total time)
+    import/           Import playlist from URL query params
     player-bar/       Now playing, queue panel, crossfade, volume, sleep timer
     playlist-modal/   Prompt and confirm dialogs
     notification-toast/  Toast notifications
@@ -150,6 +154,7 @@ All user data is stored in the browser's `localStorage`:
 | `music-player-theme` | Theme preference |
 | `music-player-favorites` | Favorite track IDs |
 | `music-player-history` | Last 50 played tracks |
+| `music-player-play-counts` | Per-track play counts (for stats) |
 | `free-music-recent-searches` | Last 5 search queries |
 | `music-player-volume` | Volume (0–1) |
 | `music-player-muted` | Mute state |
